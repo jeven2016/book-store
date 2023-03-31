@@ -29,10 +29,13 @@ Transfer/sec:    639.06KB
 
 ```
 
-### elastic  
-#### 查询方式  
+### elastic
+
+#### 查询方式
+
 * Query creation  
   Generally the query creation mechanism for Elasticsearch works as described in Query Methods
+
 ```java
 Criteria miller = new Criteria("lastName").is("Miller")  
   .subCriteria(                                          
@@ -41,16 +44,19 @@ Criteria miller = new Criteria("lastName").is("Miller")
   );
 Query query = new CriteriaQuery(criteria);
 ```
-  
+
 * StringQuery  
   This class takes an Elasticsearch query as JSON String.
+
 ```java
 Query query = new StringQuery("{ \"match\": { \"firstname\": { \"query\": \"Jack\" } } } ");
 SearchHits<Person> searchHits = operations.search(query, Person.class);
 ```
 
 * NativeQuery  
-  NativeQuery is the class to use when you have a complex query, or a query that cannot be expressed by using the Criteria API,
+  NativeQuery is the class to use when you have a complex query, or a query that cannot be expressed by using the
+  Criteria API,
+
 ```java
 Query query = NativeQuery.builder()
 	.withAggregation("lastNames", Aggregation.of(a -> a

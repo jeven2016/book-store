@@ -1,7 +1,8 @@
 **代码质量控制**
 
 - eslint + prettier  
-  Prettier 工具主要用来统一代码格式的，eslint 也会对代码进行一定程度的格式校验，但主要是用来对代码规范的扫描，而 prettier 则是专门用来对代码进行格式化，两个工具各司其职。
+  Prettier 工具主要用来统一代码格式的，eslint 也会对代码进行一定程度的格式校验，但主要是用来对代码规范的扫描，而 prettier
+  则是专门用来对代码进行格式化，两个工具各司其职。
 - husky + link stage  
   husky 注册 git 的钩子函数保证在 git 执行 commit 时调用代码扫描。  
   int-staged 保证只对当前 add 的文件进行检测。
@@ -129,7 +130,8 @@ yarn add cz-conventional-changelog --dev
 yarn add conventional-changelog-cli --dev
 ```
 
-**Commitizen 插件**：使用 Commitizen 提交时，系统将提示您在提交时填写所有必需的提交字段。不需要再等到稍后 git 提交钩子函数来检测提交内容从而拒绝您的提交请求。  
+**Commitizen 插件**：使用 Commitizen 提交时，系统将提示您在提交时填写所有必需的提交字段。不需要再等到稍后 git
+提交钩子函数来检测提交内容从而拒绝您的提交请求。  
 **cz-conventional-changelog**用来规范提交信息。
 **conventional-changelog-cli**：从 git metadata 生成变更日志。
 

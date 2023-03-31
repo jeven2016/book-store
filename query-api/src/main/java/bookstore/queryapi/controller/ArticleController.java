@@ -48,8 +48,8 @@ public class ArticleController {
     }
 
     @GetMapping("/v1/articles")
-    public PageDto<ArticleDto> search(@RequestParam String name,
-                                      @RequestParam String catalogId,
+    public PageDto<ArticleDto> search(@RequestParam(required = false) String name,
+                                      @RequestParam(required = false) String catalogId,
                                       @RequestParam(name = "limit", required = false) Integer limit,
                                       @RequestParam(name = "page", required = false) Integer page) {
         limit = Objects.requireNonNullElse(limit, 10);

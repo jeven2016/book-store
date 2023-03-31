@@ -5,7 +5,7 @@ server:
 
 spring:
   profiles:
-    include: dev, production, es
+    include: production, es
   application:
     name: query-api
   jackson:

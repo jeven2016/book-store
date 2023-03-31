@@ -8,7 +8,7 @@ import org.springframework.data.elasticsearch.annotations.HighlightParameters;
 import org.springframework.data.elasticsearch.annotations.SourceFilters;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Repository;import java.util.List;
 
 
 @Repository
@@ -33,6 +33,6 @@ public interface ArticleEsRepo extends ElasticsearchRepository<ArticleEsDoc, Str
             )
     )
     @SourceFilters(excludes = "content")
-    SearchHits<ArticleEsDoc> findArticleEsDocByName(String name, Pageable pageable);
+    List<ArticleEsDoc> findArticleEsDocByName(String name, Pageable pageable);
 
 }

@@ -100,7 +100,8 @@ if (process.env.NODE_ENV !== 'production') {
 ### 使用 craco 去覆盖 create-react-app 的 webpack 配置
 
 refer to : https://github.com/gsoft-inc/craco/blob/master/packages/craco/README.md#cra-toolchain-for-beginners
-使用 CRA 脚手架创建的项目，如果想要修改编译配置，通常可能会选择 npm run eject 弹出配置后魔改。但是，eject 是不可逆操作，弹出配置后，你将无法跟随官方的脚步去升级项目的 react-script 版本。
+使用 CRA 脚手架创建的项目，如果想要修改编译配置，通常可能会选择 npm run eject 弹出配置后魔改。但是，eject
+是不可逆操作，弹出配置后，你将无法跟随官方的脚步去升级项目的 react-script 版本。
 如果想要无 eject 重写 CRA 配置，目前成熟的是下面这几种方式
 
 - 通过 CRA 官方支持的 --scripts-version 参数，创建项目时使用自己重写过的 react-scripts 包

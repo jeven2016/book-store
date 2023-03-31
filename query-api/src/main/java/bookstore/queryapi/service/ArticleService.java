@@ -91,7 +91,7 @@ public class ArticleService {
         var queryBuilder = NativeQuery.builder();
 
         //名称分词匹配
-        if (!StringUtils.hasText(name)) {
+        if (StringUtils.hasText(name)) {
             queryBuilder.withQuery(q -> q.match(m -> m.field("name").query(name)));
         }
 

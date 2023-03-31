@@ -1,43 +1,43 @@
-import { AxiosResponse } from 'axios';
+import {AxiosResponse} from 'axios';
 
 interface Tokens {
-  idToken?: string;
-  refreshToken?: string;
-  token?: string;
+    idToken?: string;
+    refreshToken?: string;
+    token?: string;
 }
 
 interface WindowContextValue {
-  mdWindow?: boolean;
+    mdWindow?: boolean;
 }
 
 interface ResponseData extends AxiosResponse {
-  data: { errCode: number };
+    data: { errCode: number };
 }
 
 interface Catalog {
-  id: string;
-  name: string;
-  order: number;
-  children: Catalog[];
+    id: string;
+    name: string;
+    order: number;
+    children: Catalog[];
 }
 
 interface ArticleCatalogContextValue {
-  catalogs: Catalog[];
-  selectedCatalogId: string | null;
-  changeArticleCatalog: ((id: string) => void) | null;
+    catalogs: Catalog[];
+    selectedCatalogId: string | null;
+    changeArticleCatalog: ((id: string) => void) | null;
 }
 
 interface ArticlePage {
-  count: number;
-  limit: number;
-  page: number;
-  totalPages: number;
-  rows: Article[];
+    count: number;
+    limit: number;
+    page: number;
+    totalPages: number;
+    rows: Article[];
 }
 
 interface ArticleInfo {
-  id: string;
-  name: string;
-  content: string;
-  createDate: Date;
+    id: string;
+    name: string;
+    content: string;
+    createDate: Date;
 }
