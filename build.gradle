@@ -8,6 +8,7 @@ allprojects {
     buildscript {
         repositories {
             mavenLocal() //firstly try to retrieve jars from local maven repository
+            maven { url nexusPublicUrl }
             mavenCentral()
         }
 
@@ -42,6 +43,7 @@ subprojects { subpro ->
 
     repositories {
         mavenLocal() //firstly try to retrieve jars from local maven repository
+        maven { url nexusPublicUrl }
         mavenCentral()
     }
 

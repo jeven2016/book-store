@@ -1,2 +1,2 @@
 rootProject.name = 'book-store'
-include ':query-api'
+include 'query-api'
