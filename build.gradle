@@ -1,0 +1,53 @@
+//apply the dependencies defined in the customized plugin and then the sub projects can access them
+apply from: 'dependencies.gradle'
+
+/**
+ * Apply global settings to all projects
+ */
+allprojects {
+    buildscript {
+        repositories {
+            mavenLocal() //firstly try to retrieve jars from local maven repository
+            mavenCentral()
+        }
+
+        dependencies {
+//      classpath libs.'sonarqube-gradle-plugin'
+        }
+    }
+}
+
+subprojects { subpro ->
+    String folders = project.property('custom.project.folders')
+    String[] paths = subpro.path.split(':');//split the path with colon
+    String subproName = paths.last();
+
+    //ignore the project folders since they aren't real gradle projects
+    if (folders?.contains(subproName)) {
+        println "info: ${subproName} is ignored to apply default settings."
+        return;
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+    apply plugin: 'project-report'
+
+
+    sourceCompatibility = projectInfo.sourceCompatibility
+    targetCompatibility = projectInfo.targetCompatibility
+
+    group = projectInfo.group
+    version = projectInfo.version
+
+    repositories {
+        mavenLocal() //firstly try to retrieve jars from local maven repository
+        mavenCentral()
+    }
+
+    configurations {
+        //exclude commons-loggin since we use logback+slf4j libs
+        all*.exclude module: 'commons-logging'
+    }
+
+}

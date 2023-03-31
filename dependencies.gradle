@@ -1,0 +1,105 @@
+//Global project information
+ext.projectInfo = [
+        'group'              : 'wzjtech',
+        'version'            : '0.1',
+        'sourceCompatibility': '17',
+        'targetCompatibility': '17'
+]
+
+//The libraries used for project
+
+ext.libs = [
+        'flink-java'                                  : 'org.apache.flink:flink-java:1.13.2',
+        'flink-streaming-java'                        : 'org.apache.flink:flink-streaming-java_2.12:1.13.2',
+        'flink-runtime-web'                           : 'org.apache.flink:flink-runtime-web_2.12:1.13.2',
+        'flink-clients'                               : 'org.apache.flink:flink-clients_2.12:1.13.2',
+        'flink-connector-kafka-base'                  : 'org.apache.flink:flink-connector-kafka-base_2.12:1.11.4',
+
+        'selenium-java'                               : 'org.seleniumhq.selenium:selenium-java:3.141.59',
+        'selenium-chrome-driver'                      : 'org.seleniumhq.selenium:selenium-chrome-driver:3.141.59',
+        'selenium-firefox-driver'                     : 'org.seleniumhq.selenium:selenium-firefox-driver:3.141.59',
+
+        //命令行接口
+        'picocli'                                     : 'info.picocli:picocli:4.6.1',
+        'picocli-codegen'                             : 'info.picocli:picocli-codegen:4.6.1',
+
+        kryo                                          : 'com.esotericsoftware:kryo:5.2.0',
+        mongodb                                       : 'org.mongodb:mongodb-driver-sync:4.3.1',
+
+        /**spring boot**/
+
+        //https://spring.io/blog/2021/05/10/spring-authorization-server-0-1-1-available-now
+        //https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#web.security.spring-webflux
+        //https://www.baeldung.com/spring-security-oauth-auth-server
+        'authorization-server'                        : 'org.springframework.security:spring-security-oauth2-authorization-server:0.2.0',
+        'spring-boot-starter-oauth2-resource-server'  : 'org.springframework.boot:spring-boot-starter-oauth2-resource-server',
+
+        'spring-boot-starter-data-mongodb-reactive'   : 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive',
+        'spring-boot-starter-data-redis-reactive'     : 'org.springframework.boot:spring-boot-starter-data-redis-reactive',
+        'spring-boot-starter-webflux'                 : 'org.springframework.boot:spring-boot-starter-webflux',
+        'spring-boot-starter-web'                     : 'org.springframework.boot:spring-boot-starter-web',
+        'spring-boot-starter-aop'                     : 'org.springframework.boot:spring-boot-starter-aop',
+        'spring-boot-starter-security'                : 'org.springframework.boot:spring-boot-starter-security',
+        'spring-boot-starter-actuator'                : 'org.springframework.boot:spring-boot-starter-actuator',
+        'spring-boot-starter-cache'                   : 'org.springframework.boot:spring-boot-starter-cache',
+        'spring-retry'                                : 'org.springframework.retry:spring-retry',
+        'spring-security-test'                        : 'org.springframework.security:spring-security-test',
+
+        'nimbus-jose-jwt'                             : 'com.nimbusds:nimbus-jose-jwt:9.13',
+
+//    'spring-boot-starter-data-mongodb'          : 'org.springframework.boot:spring-boot-starter-data-mongodb',
+//    'spring-boot-starter-data-redis'            : 'org.springframework.boot:spring-boot-starter-data-redis',
+//    'spring-boot-starter-web'                   : 'org.springframework.boot:spring-boot-starter-web',
+//    'spring-boot-starter-batch'                 : 'org.springframework.boot:spring-boot-starter-batch',
+//    'spring-boot-starter-data-jpa'              : 'org.springframework.boot:spring-boot-starter-data-jpa',
+//   'sonarqube-gradle-plugin'                   : 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.6.2',
+
+        /**spring cloud**/
+        'spring-cloud-dependencies'                   : 'org.springframework.cloud:spring-cloud-dependencies:2020.0.4',
+        'avro'                                        : 'org.apache.avro:avro:1.10.1',
+        'spring-cloud-starter-stream-kafka'           : 'org.springframework.cloud:spring-cloud-starter-stream-kafka',
+        'spring-cloud-sleuth-stream'                  : 'org.springframework.cloud:spring-cloud-sleuth-stream',
+        'spring-cloud-starter-sleuth'                 : 'org.springframework.cloud:spring-cloud-starter-sleuth',
+        'spring-cloud-starter-openfeign'              : 'org.springframework.cloud:spring-cloud-starter-openfeign',
+        'spring-cloud-starter-gateway'                : 'org.springframework.cloud:spring-cloud-starter-gateway',
+
+        //spring cloud alibaba
+        'spring-cloud-alibaba-dependencies'           : 'com.alibaba.cloud:spring-cloud-alibaba-dependencies:2.2.2.RELEASE',
+        'spring-cloud-starter-alibaba-nacos-discovery': 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery',
+
+
+//    'spring-cloud-starter-netflix-eureka-server': 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server',
+//    'spring-cloud-starter-netflix-eureka-client': 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client',
+        'spring-cloud-starter-gateway'                : 'org.springframework.cloud:spring-cloud-starter-gateway',
+//    'spring-cloud-security'                     : 'org.springframework.cloud:spring-cloud-security',
+//    'spring-cloud-starter-oauth2'               : 'org.springframework.cloud:spring-cloud-starter-oauth2',
+
+
+//    'mysql'                                     : 'mysql:mysql-connector-java',
+        'h2-database'                                 : 'com.h2database:h2',
+
+        //swagger documentation
+//   'springfox-swagger2'                        : 'io.springfox:springfox-swagger2:2.9.2',
+//   'springfox-swagger-ui'                      : 'io.springfox:springfox-swagger-ui:2.9.2',
+
+        //for unit test
+//   'powermock-module-junit4'                   : 'org.powermock:powermock-module-junit4:2.0.0-RC.4',
+//   'powermock-api-mockito2'                    : 'org.powermock:powermock-api-mockito2:2.0.0-RC.4',
+
+//   'powermock-module-junit4-rule-agent'        : 'org.powermock:powermock-module-junit4-rule-agent:2.0.0-RC.4',
+        'spring-boot-starter-test'                    : 'org.springframework.boot:spring-boot-starter-test',
+        'spring-security-test'                        : 'org.springframework.security:spring-security-test',
+        'spring-cloud-stream-test-support'            : 'org.springframework.cloud:spring-cloud-stream-test-support',
+
+        'mapstruct'                                   : 'org.mapstruct:mapstruct:1.5.3.Final',
+        'mapstruct-processor'                         : 'org.mapstruct:mapstruct-processor:1.5.3.Final',
+        lombok                                        : 'org.projectlombok:lombok:1.18.20',
+        'lombok-mapstruct-binding'                    : 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+]
+//ext['mockito.version'] = '3.7.7'
+
+// upgrade mysql connector to the latest version since the dependency check tool complains
+// the origin version of mysql connector is too old
+//ext['mysql.version'] = '8.0.23'
+
+//ext['elasticsearch-client.version'] = '7.15.0'

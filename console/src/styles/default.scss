@@ -1,0 +1,192 @@
+$default_background: radial-gradient(
+                circle at left top,
+                rgba(98, 72, 213, 0.9) 15%,
+                #0c3f99e6 50%,
+                #043b9de6 85%
+);
+$default-box-shadow: rgb(0 0 0 / 10%) 0rem 0.25rem 0.375rem -0.0625rem,
+rgb(0 0 0 / 6%) 0rem 0.125rem 0.25rem -0.0625rem;
+
+$header-line-height: 4rem;
+$normal-line-height: 3rem;
+$content-padding: 0.5rem 1rem;
+
+//colors
+$light-background: #fff;
+$dark-background: #000;
+$primary-color: #eb5545;
+$primary-text-color: #eb5545;
+$primary-background: $dark-background;
+$body-background: #f6f6f6;
+$default-text-color: #6c757d;
+$content-text-color: #000;
+$content-background: rgb(241, 229, 201);
+$title-text-color: darken($primary-color, 10%);
+
+$search-input-border-radius: 0;
+
+html {
+  //font-size: 14px;
+  height: 100%;
+}
+
+body {
+  font: 1rem/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial,
+  Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  background: $body-background;
+  color: $default-text-color;
+  height: 100%;
+}
+
+
+#root {
+  height: 100%;
+
+  .w-container-body {
+    height: auto;
+    width: 100%;
+  }
+
+  .navbar .navbar-item.with-bar.active:after,
+  .navbar .navbar-item.with-bar:focus:after,
+  .navbar .navbar-item.with-bar:hover:after {
+    background-color: $primary-color;
+  }
+}
+
+.bs-panel-title {
+  font-weight: normal;
+  color: $title-text-color;
+  padding: 1rem 1.5rem 0;
+}
+
+.bs-header-wrapper {
+  height: 7rem;
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  background: $light-background;
+}
+
+.bs-header {
+  > .bs-header-logo {
+    font-size: 2rem;
+    font-weight: 500;
+    color: $primary-text-color;
+  }
+
+  .bs-header-search-input {
+    max-width: 25rem;
+  }
+}
+
+.bs-input-search {
+  border-color: $primary-color !important;
+  border-top-left-radius: $search-input-border-radius !important;
+  border-bottom-left-radius: $search-input-border-radius !important;
+}
+
+.bs-btn-search {
+  background: $primary-color !important;
+  border: 1px solid $primary-color !important;
+  color: #fff !important;
+  width: 4rem !important;
+  border-top-right-radius: $search-input-border-radius !important;
+  border-bottom-right-radius: $search-input-border-radius !important;
+}
+
+.bs-navbar {
+  background: $primary-background;
+  box-shadow: $default-box-shadow;
+
+  .bs-header-bar {
+    line-height: 3rem;
+    border-radius: 0;
+    background: $primary-background;
+
+    .title-info,
+    .navbar-item {
+      line-height: unset;
+      font-weight: 500;
+      padding: 0 1rem !important;
+    }
+  }
+}
+
+.bs-content {
+
+  .bs-content-panel {
+    background: $light-background;
+    margin-top: 1.5rem;
+    padding: 1rem 0;
+
+    &.with-gutter {
+      padding: 1rem;
+    }
+
+    > .bs-content-inner {
+      padding-left: 0;
+      padding-right: 0;
+      flex: 1 1 auto;
+
+      > .wui-box-left {
+        min-width: 15rem;
+      }
+
+      .bs-content-inner-left {
+        flex: 1 1 auto;
+      }
+    }
+
+  }
+}
+
+.bs-link {
+  color: #24292f;
+  cursor: pointer;
+
+  &:hover, &:focus, &:active, &.active {
+    color: $primary-text-color;
+    text-decoration: underline;
+  }
+}
+
+.bs-book-list {
+  padding: 0 1.5rem 0 .5rem;
+  border-left: 1px solid #cccccc;
+  margin-bottom: 1rem;
+
+  table td {
+    text-align: left;
+    border: solid #ccc;
+    border-width: 0 0 1px;
+
+    .bs-article-name-link {
+      @extend .bs-link;
+    }
+  }
+}
+
+.bs-article {
+  color: $content-text-color;
+  font-size: 1.25rem !important;
+  min-height: 100%;
+  width: 100%;
+  padding: 2rem;
+  // background: 'rgb(226,203,173)'
+  background: $content-background;
+
+  > .content-info {
+    width: 60%;
+  }
+
+  .divider.horizontal {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.bs-tbl-index {
+  color: #fff;
+  background: lighten($default-text-color, 10%);
+  padding: .25rem;
+}

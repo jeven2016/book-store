@@ -1,0 +1,20 @@
+### get all aritcle catalogs
+GET http://localhost:8080/api/v1/article-catalogs
+Content-Type: application/json
+
+### get the first page of articles
+GET http://localhost:8080/api/v1/article-catalogs/61bdc7c3dba923423424c455/articles
+Content-Type: application/json
+
+### get a specific page of articles
+GET http://localhost:8080/api/v1/article-catalogs/61bdc7c3dba923423424c455/articles?page=4&limit=10
+Content-Type: application/json
+
+### get a article
+GET http://localhost:8080/api/v1/articles/61bdc7dbdba923423424c457
+Content-Type: application/json
+
+### search by name
+GET http://localhost:8080/api/v1/articles?name=女友&limit=20&page=1
+Content-Type: application/json
+

@@ -1,0 +1,51 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  profiles:
+    include: dev, production, es
+  application:
+    name: query-api
+  jackson:
+    default-property-inclusion: non_null   # ignore the property whose value is null
+
+# Enable Spring Boot Actuator: Production-ready features to monitor and manage this application
+# when it’s pushed to production using HTTP endpoints, in addition the JMX endpoints is disabled.
+management:
+  port: 8090  # enable http endpoints for spring actuator
+  ssl:
+    enabled: false
+  security:
+    #roles: ADMIN #the role required to pass the spring security authentication
+    enabled: false
+  context-path: /mgnt
+  health:
+    defaults:
+      enabled: true
+    status:
+#      order: FATAL, DOWN, OUT_OF_SERVICE, UNKNOWN, UP
+info:
+  microservice:
+    name: "web"
+    description: "a web microservice"
+    version: "0.1"
+
+endpoints:
+  actuator:
+    enabled: true
+    sensitive: false
+  beans:
+    id: applicaion
+  shutdown:
+    enabled: false
+  jmx:
+    enabled: false #Disabling JMX endpoints
+
+
+logging:
+  level:
+    root: info
+    org.springframework.data.mongodb.core: debug
+

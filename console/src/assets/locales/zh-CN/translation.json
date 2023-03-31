@@ -1,0 +1,34 @@
+{
+  "hello": "你好啊",
+  "web": {
+    "title": "统一平台",
+    "details": "欢迎登录统一平台"
+  },
+  "menu": {
+    "books": "书库世界",
+    "system_config": "系统配置"
+  },
+  "login.button": "SSO单点登录",
+  "global": {
+    "switch_list": "切换视图",
+    "search": {
+      "placeholder": "请输入关键字搜索"
+    },
+    "card_type": {
+      "card": "卡片排列",
+      "list": "列表排列"
+    },
+    "pagination": {
+      "total": "共",
+      "pages": "页",
+      "records": "条记录"
+    },
+    "loading": "数据加载中, 请稍候。",
+    "page.loading": "页面加载中, 请稍候。",
+    "link": {
+      "exit": "退出",
+      "profile_setting": "个人设置"
+    }
+  },
+  "books": {}
+}
