@@ -16,7 +16,7 @@ dayjs.extend(timezone);
 dayjs.tz.guess();
 
 const rootElem = document.getElementById('root');
-ReactDOM.createRoot(rootElem as HTMLElement).render(<Home2/>);
+ReactDOM.createRoot(rootElem as HTMLElement).render(<Home2 />);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

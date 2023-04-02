@@ -1,5 +1,5 @@
-import {Menu} from 'react-windy-ui';
+import { Menu } from 'react-windy-ui';
 
 export default function ArtCatalogContent() {
-    return <Menu></Menu>;
+  return <Menu></Menu>;
 }

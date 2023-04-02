@@ -29,13 +29,17 @@ public class BooksConfig {
     @Bean(name = "booksMongoClient")
     public MongoClient mongoClient(@Qualifier("bookProps") MongoProperties mongoProperties) {
 
-        MongoCredential credential = MongoCredential
-                .createCredential(mongoProperties.getUsername(), mongoProperties.getAuthenticationDatabase(), mongoProperties.getPassword());
+//        MongoCredential credential = MongoCredential
+//                .createCredential(mongoProperties.getUsername(), mongoProperties.getAuthenticationDatabase(), mongoProperties.getPassword());
 
-        return MongoClients.create(MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(mongoProperties.getHost(), mongoProperties.getPort()))))
-                .credential(credential)
-                .build());
+
+//        return MongoClients.create(MongoClientSettings.builder()
+//                .applyToClusterSettings(builder -> builder
+//                        .hosts(singletonList(new ServerAddress(mongoProperties.getHost(), mongoProperties.getPort()))))
+//                .credential(credential)
+//                .build());
+
+        // create by connection string
+        return MongoClients.create(mongoProperties.getUri());
     }
 }

@@ -1,16 +1,19 @@
 spring:
   data:
     mongodb:
-      database: books
-      host: 192.168.1.11
-      port: 30018
-      username: db_user
-      password: db_pwd
-      authentication-database: admin
+#      database: books
+#      host: 192.168.1.11
+#      port: 30018
+#      username: db_user
+#      password: db_pwd
+#      authentication-database: admin
+      #refer to https://www.mongodb.com/docs/manual/reference/connection-string/#connections-connection-options
+      uri: mongodb://db_user:db_pwd@192.168.1.11:30003/books?connectTimeoutMS=20000&minPoolSize=0&maxPoolSize=10&maxIdleTimeMS=900000&authSource=admin
+
 
     redis:
       host: 192.168.1.11
-      port: 30084
+      port: 30025
       password: kmhfZFWfzRWeHri
       lettuce:
         pool:

@@ -1,4 +1,4 @@
-import {KcConfig} from '@/common/config/EnvConfig';
+import { KcConfig } from '@/common/config/EnvConfig';
 import Keycloak from 'keycloak-js';
 
 // Setup Keycloak instance as needed
