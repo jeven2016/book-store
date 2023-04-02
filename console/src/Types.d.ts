@@ -17,6 +17,7 @@ interface ResponseData extends AxiosResponse {
 interface Catalog {
   id: string;
   name: string;
+  catalogId: string;
   order: number;
   children: Catalog[];
 }

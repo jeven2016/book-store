@@ -1,6 +1,6 @@
 import { Box, Container, Pagination, Space, Table } from 'react-windy-ui';
 import dayjs from 'dayjs';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ArticlePage, ArticleSearchContextValue, Catalog } from '@/Types';
 import { get } from '@/client/Request';
 import { buildUrl } from '@/common/utils';
@@ -28,6 +28,7 @@ export default function AllArticles(props) {
 
   const changeCatalog = useCallback((id) => {
     setSubCatalogId(id);
+    setPage(1);
   }, []);
 
   const showDefaultPage = useCallback(() => {
@@ -55,6 +56,8 @@ export default function AllArticles(props) {
     setPageSize(pageSize);
   }, []);
 
+  const cells = useMemo(() => getCells(catalogs), [catalogs]);
+
   return (
     <Container extraClassName="bs-content" autoAdjust={true}>
       <div className="bs-content-panel with-gutter">
@@ -65,6 +68,11 @@ export default function AllArticles(props) {
             left={c.name + ':'}
             center={
               <Space gutter={{ x: 32 }}>
+                <span
+                  className={`bs-link ${!subCatalogId ? 'active' : ''}`}
+                  onClick={() => changeCatalog(null)}>
+                  不限
+                </span>
                 {c.children.map((chd: Catalog) => (
                   <span
                     className={`bs-link ${subCatalogId === chd.id ? 'active' : ''}`}
@@ -138,37 +146,64 @@ export default function AllArticles(props) {
   );
 }
 
-const cells = [
-  {
-    head: '序号',
-    paramName: 'key',
-    width: '50px',
-    format: (text, row, tableIndex) => {
-      return (
-        <h5>
-          <span className="bs-tbl-index">{tableIndex + 1}</span>
-        </h5>
-      );
+const getCells = (catalogs: Catalog[]) => {
+  return [
+    {
+      head: '序号',
+      paramName: 'key',
+      width: '50px',
+      format: (text, row, tableIndex) => {
+        return (
+          <h5>
+            <span className="bs-tbl-index">{tableIndex + 1}</span>
+          </h5>
+        );
+      }
+    },
+    {
+      head: '频道',
+      paramName: 'catalogId',
+      width: '150px',
+      format: (text, row, tableIndex) => {
+        return (
+          <h5>
+            <span>[{genCellData(catalogs, row.catalogId)}]</span>
+          </h5>
+        );
+      }
+    },
+    {
+      head: '书名',
+      paramName: 'name',
+      format: (text, row) => (
+        <a
+          className="bs-article-name-link"
+          rel="noreferrer"
+          href={`/articles/${row.id}`}
+          target="_blank"
+          dangerouslySetInnerHTML={{ __html: text }}></a>
+      )
+    },
+    {
+      head: '入库时间',
+      paramName: 'createDate',
+      width: '200px',
+      format: (text) => {
+        return <h5>{dayjs(text).format('YYYY-MM-DD')}</h5>;
+      }
     }
-  },
-  {
-    head: '书名',
-    paramName: 'name',
-    format: (text, row) => (
-      <a
-        className="bs-article-name-link"
-        rel="noreferrer"
-        href={`/articles/${row.id}`}
-        target="_blank"
-        dangerouslySetInnerHTML={{ __html: text }}></a>
-    )
-  },
-  {
-    head: '入库时间',
-    paramName: 'createDate',
-    width: '200px',
-    format: (text) => {
-      return <h5>{dayjs(text).format('YYYY-MM-DD')}</h5>;
+  ];
+};
+
+const genCellData = (catalogs: Catalog[], catalogId) => {
+  for (const c of catalogs) {
+    if (catalogId === c.id) {
+      return c.name;
+    }
+    const realName = genCellData(c.children, catalogId);
+    if (realName) {
+      return realName;
     }
   }
-];
+  return null;
+};

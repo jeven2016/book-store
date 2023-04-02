@@ -14,7 +14,7 @@ import ArticleCatalogs from './ArticleCatalogs';
 import Content from '@/pages/store/article/Content';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArticleCatalogContext, ArticleSearchCtx } from '@/common/Context';
-import { ArticleSearchContextValue, Catalog } from '@/Types';
+import { Catalog } from '@/Types';
 import { buildUrl } from '@/common/utils';
 import { get } from '@/client/Request';
 
@@ -67,6 +67,12 @@ export default function Home() {
 
 function Header(props) {
   const { search, setSearch, changeArticleCatalog, setSearchText } = props;
+
+  const doSearch = useCallback(() => {
+    changeArticleCatalog('all');
+    setSearchText(search);
+  }, [search]);
+
   return (
     <>
       <div className="bs-header-wrapper">
@@ -81,14 +87,14 @@ function Header(props) {
                   extraClassName="bs-input-search"
                   placeholder="书名、作者"
                   value={search}
+                  onKeyDown={(e) => e.key === 'Enter' && doSearch()}
                   onChange={(e) => setSearch(e.target.value)}
                 />
                 <InputGroup.Item autoScale={false}>
                   <Button
                     extraClassName="bs-btn-search"
                     onClick={() => {
-                      changeArticleCatalog('all');
-                      setSearchText(search);
+                      doSearch();
                     }}>
                     <IconSearch />
                   </Button>
