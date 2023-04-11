@@ -4,7 +4,7 @@ import bookstore.queryapi.document.ArticleDoc;
 import bookstore.queryapi.dto.ArticleDto;
 import bookstore.queryapi.es_document.ArticleEsDoc;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.Mapping;import org.mapstruct.factory.Mappers;
 
 @Mapper
 public interface ArticleEsDocMapper {
@@ -13,5 +13,7 @@ public interface ArticleEsDocMapper {
     //    @Mapping(source = "id", target = "mongoId")
     ArticleEsDoc toEsDoc(ArticleDoc mongoDoc);
 
+    @Mapping(target = "name", constant = "书籍名称测试结果")
+    @Mapping(target = "content", constant = "内容结果：书籍名称测试结果")
     ArticleDto toDto(ArticleEsDoc doc);
 }

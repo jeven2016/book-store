@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 export default function ArticleList(props) {
-  const { subCatalogId } = props;
+  const { subCatalogId, smWindow = false } = props;
   const { t } = useTranslation();
   const [tableData, setTableData] = useState<ArticlePage | null>(null);
   const [page, setPage] = useState<number>(1);
@@ -39,8 +39,9 @@ export default function ArticleList(props) {
         left={<></>}
         right={
           <Pagination
+            simple={smWindow}
             pageCount={tableData?.totalPages}
-            defaultPage={1}
+            page={page}
             siblingCount={1}
             hasPageRange={true}
             pageRange={pageSize}
@@ -71,8 +72,9 @@ export default function ArticleList(props) {
         left={<></>}
         right={
           <Pagination
+            simple={smWindow}
             pageCount={tableData?.totalPages}
-            defaultPage={1}
+            page={page}
             siblingCount={1}
             hasPageRange={true}
             pageRange={pageSize}

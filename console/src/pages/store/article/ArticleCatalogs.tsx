@@ -1,4 +1,4 @@
-import { Navbar } from 'react-windy-ui';
+import { IconList, Navbar } from 'react-windy-ui';
 import { useContext } from 'react';
 import { ArticleCatalogContext } from '@/common/Context';
 import { Catalog } from '@/Types';
@@ -9,7 +9,12 @@ export default function ArticleCatalogs() {
 
   return (
     <Navbar type="primary" extraClassName="bs-header-bar" hasBorder={false} hasBox={false}>
-      <Navbar.Title>书库</Navbar.Title>
+      <Navbar.Title>
+        <Navbar.Switch>
+          <IconList size="small" />
+        </Navbar.Switch>
+        <span>书库</span>
+      </Navbar.Title>
       <Navbar.List justify="start">
         {catalogs.map((c: Catalog, index: number) => {
           return (

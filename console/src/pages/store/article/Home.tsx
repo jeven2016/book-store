@@ -7,8 +7,10 @@ import {
   IconStarBorder,
   Input,
   InputGroup,
+  Responsive,
   Row,
-  Space
+  Space,
+  useMediaQuery
 } from 'react-windy-ui';
 import ArticleCatalogs from './ArticleCatalogs';
 import Content from '@/pages/store/article/Content';
@@ -67,6 +69,7 @@ export default function Home() {
 
 function Header(props) {
   const { search, setSearch, changeArticleCatalog, setSearchText } = props;
+  const { matches } = useMediaQuery(Responsive.sm.max);
 
   const doSearch = useCallback(() => {
     changeArticleCatalog('all');
@@ -78,10 +81,12 @@ function Header(props) {
       <div className="bs-header-wrapper">
         <Container extraClassName="bs-header-wrapper" autoAdjust={true}>
           <Row justify="center" align="center" extraClassName="bs-header">
-            <Col extraClassName="bs-header-logo" align="center" flexCol={true} col={2}>
-              图书馆
-            </Col>
-            <Col col={8} justify="center" flexCol={true}>
+            {!matches && (
+              <Col extraClassName="bs-header-logo" align="center" flexCol={true} col={2}>
+                图书馆
+              </Col>
+            )}
+            <Col col={matches ? 12 : 8} justify="center" flexCol={true}>
               <InputGroup size="small" extraClassName="bs-header-search-input">
                 <Input
                   extraClassName="bs-input-search"
@@ -101,7 +106,7 @@ function Header(props) {
                 </InputGroup.Item>
               </InputGroup>
             </Col>
-            <Col co={2}>
+            <Col co={matches ? 12 : 2} style={{ marginTop: matches ? '.5rem' : '0' }}>
               <Space>
                 <Button leftIcon={<IconStarBorder />} hasBorder={false} hasBox={false} size="small">
                   我的书架

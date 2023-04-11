@@ -1,4 +1,4 @@
-import { Box, Container, Menu } from 'react-windy-ui';
+import { Box, Container, Menu, Responsive, useMediaQuery } from 'react-windy-ui';
 import ArticleList from '@/pages/store/article/ArticleList';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { ArticleCatalogContext } from '@/common/Context';
@@ -9,6 +9,7 @@ export default function Content() {
   const [selectedSubCatalogId, setSelectedSubCatalogId] = useState<string | null>(null);
   const articleCatalogCtx = useContext(ArticleCatalogContext);
   const { catalogs, selectedCatalogId } = articleCatalogCtx;
+  const { matches } = useMediaQuery(Responsive.sm.max);
 
   let chd = [] as Catalog[];
 
@@ -34,6 +35,24 @@ export default function Content() {
     setSelectedSubCatalogId(selectedId);
   }, []);
 
+  const menu = (
+    <div className="bs-content-inner-left">
+      <Menu
+        direction={matches ? 'horizontal' : 'vertical'}
+        type="primary"
+        hasBox={false}
+        primaryBarPosition="left"
+        activeItems={selectedSubCatalogId ?? ''}
+        onClickItem={clickItem}>
+        {chd.map((c: Catalog) => (
+          <Menu.Item key={c.id} id={c.id}>
+            {c.name}
+          </Menu.Item>
+        ))}
+      </Menu>
+    </div>
+  );
+
   return selectedCatalogId === 'all' ? (
     <AllArticles />
   ) : (
@@ -42,28 +61,21 @@ export default function Content() {
         <div className="bs-panel-title">
           <h3>精品分类</h3>
         </div>
-        <Box
-          extraClassName="bs-content-inner"
-          block
-          align="start"
-          left={
-            <div className="bs-content-inner-left">
-              <Menu
-                type="primary"
-                hasBox={false}
-                primaryBarPosition="left"
-                activeItems={selectedSubCatalogId ?? ''}
-                onClickItem={clickItem}>
-                {chd.map((c: Catalog) => (
-                  <Menu.Item key={c.id} id={c.id}>
-                    {c.name}
-                  </Menu.Item>
-                ))}
-              </Menu>
-            </div>
-          }
-          center={<ArticleList subCatalogId={selectedSubCatalogId} />}
-        />
+        {matches && (
+          <div>
+            {menu}
+            <ArticleList smWindow={matches} subCatalogId={selectedSubCatalogId} />
+          </div>
+        )}
+        {!matches && (
+          <Box
+            extraClassName="bs-content-inner"
+            block
+            align="start"
+            left={menu}
+            center={<ArticleList smWindow={matches} subCatalogId={selectedSubCatalogId} />}
+          />
+        )}
       </div>
     </Container>
   );
