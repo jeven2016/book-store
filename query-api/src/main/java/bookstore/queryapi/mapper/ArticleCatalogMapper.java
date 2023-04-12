@@ -11,7 +11,7 @@ public interface ArticleCatalogMapper {
     ArticleCatalogMapper INSTANCE = Mappers.getMapper(ArticleCatalogMapper.class);
 
 
-    @Mapping(target = "name", constant = "测试条目")
+//    @Mapping(target = "name", constant = "测试条目")
     ArticleCatalogDto toDto(ArticleCatalogDoc doc);
 
     ArticleCatalogDoc toDocument(ArticleCatalogDto doc);

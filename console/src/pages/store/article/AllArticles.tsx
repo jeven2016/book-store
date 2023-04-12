@@ -88,28 +88,6 @@ export default function AllArticles(props) {
         ))}
       </div>
       <div className="bs-content-panel with-gutter bs-book-list">
-        <Box
-          block
-          align="end"
-          left={<></>}
-          right={
-            <Pagination
-              pageCount={tableData?.totalPages}
-              defaultPage={1}
-              siblingCount={1}
-              hasPageRange={true}
-              pageRange={pageSize}
-              onChangeRange={changePageSize}
-              pageRanges={[10, 20, 50, 100]}
-              leftItems={[
-                `${t('global.pagination.total')}${tableData?.totalPages || 0}${t(
-                  'global.pagination.pages'
-                )}， ${tableData?.count || 0}${t('global.pagination.records')}`
-              ]}
-              onChange={goTo}
-            />
-          }
-        />
         <Table
           type="simple"
           hover={true}
@@ -126,6 +104,7 @@ export default function AllArticles(props) {
           left={<></>}
           right={
             <Pagination
+              simple={sm}
               pageCount={tableData?.totalPages}
               defaultPage={1}
               siblingCount={1}
@@ -165,12 +144,17 @@ const getSmCells = (catalogs: Catalog[]) => {
       head: '搜索结果',
       paramName: 'name',
       format: (text, row) => (
-        <a
-          className="bs-article-name-link"
-          rel="noreferrer"
-          href={`/articles/${row.id}`}
-          target="_blank"
-          dangerouslySetInnerHTML={{ __html: text }}></a>
+        <div>
+          <a
+            className="bs-article-name-link"
+            rel="noreferrer"
+            href={`/articles/${row.id}`}
+            target="_blank"
+            dangerouslySetInnerHTML={{ __html: text }}></a>
+          <h5>
+            <span>[{genCellData(catalogs, row.catalogId)}]</span>
+          </h5>
+        </div>
       )
     }
   ];

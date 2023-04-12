@@ -11,8 +11,8 @@ public interface ArticleMapper {
 
     ArticleMapper INSTANCE = Mappers.getMapper(ArticleMapper.class);
 
-    @Mapping(target = "name", constant = "书籍名称测试结果")
-    @Mapping(target = "content", constant = "内容结果：书籍名称测试结果")
+//    @Mapping(target = "name", constant = "书籍名称测试结果")
+//    @Mapping(target = "content", constant = "内容结果：书籍名称测试结果")
     ArticleDto toDto(ArticleDoc doc);
 
     ArticleDoc toDocument(ArticleDto doc);
