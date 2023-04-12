@@ -1,11 +1,11 @@
 import { Box, Container, Pagination, Space, Table } from 'react-windy-ui';
 import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ArticlePage, ArticleSearchContextValue, Catalog } from '@/Types';
+import { ArticlePage, ArticleSearchContextValue, Catalog, WindowChangeInfo } from '@/Types';
 import { get } from '@/client/Request';
 import { buildUrl } from '@/common/utils';
 import { useTranslation } from 'react-i18next';
-import { ArticleSearchCtx } from '@/common/Context';
+import { ArticleSearchCtx, WindowChangeContext } from '@/common/Context';
 
 export default function AllArticles(props) {
   const { t } = useTranslation();
@@ -14,10 +14,9 @@ export default function AllArticles(props) {
   const [subCatalogId, setSubCatalogId] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
+  const { sm }: WindowChangeInfo = useContext<WindowChangeInfo>(WindowChangeContext);
 
   const { name } = useContext<ArticleSearchContextValue>(ArticleSearchCtx);
-
-  console.log('name=' + name);
 
   useEffect(() => {
     get(buildUrl('/article-catalogs')).then((data) => {
@@ -56,34 +55,36 @@ export default function AllArticles(props) {
     setPageSize(pageSize);
   }, []);
 
-  const cells = useMemo(() => getCells(catalogs), [catalogs]);
+  const cells = useMemo(() => (sm ? getSmCells(catalogs) : getCells(catalogs)), [sm, catalogs]);
 
   return (
     <Container extraClassName="bs-content" autoAdjust={true}>
       <div className="bs-content-panel with-gutter">
         {catalogs.map((c: Catalog) => (
-          <Box
-            key={`cat-${c.id}`}
-            block
-            left={c.name + ':'}
-            center={
-              <Space gutter={{ x: 32 }}>
-                <span
-                  className={`bs-link ${!subCatalogId ? 'active' : ''}`}
-                  onClick={() => changeCatalog(null)}>
-                  不限
-                </span>
-                {c.children.map((chd: Catalog) => (
+          <div key={`cat-${c.id}`}>
+            <Box
+              block
+              extraClassName="bs-all-catalogs"
+              left={c.name + ':'}
+              center={
+                <Space gutter={{ x: 16, y: 8 }} wrap>
                   <span
-                    className={`bs-link ${subCatalogId === chd.id ? 'active' : ''}`}
-                    key={`chd-${chd.id}`}
-                    onClick={() => changeCatalog(chd.id)}>
-                    {chd.name}
+                    className={`bs-link ${!subCatalogId ? 'active' : ''}`}
+                    onClick={() => changeCatalog(null)}>
+                    不限
                   </span>
-                ))}
-              </Space>
-            }
-          />
+                  {c.children.map((chd: Catalog) => (
+                    <span
+                      className={`bs-link ${subCatalogId === chd.id ? 'active' : ''}`}
+                      key={`chd-${chd.id}`}
+                      onClick={() => changeCatalog(chd.id)}>
+                      {chd.name}
+                    </span>
+                  ))}
+                </Space>
+              }
+            />
+          </div>
         ))}
       </div>
       <div className="bs-content-panel with-gutter bs-book-list">
@@ -145,6 +146,35 @@ export default function AllArticles(props) {
     </Container>
   );
 }
+
+const getSmCells = (catalogs: Catalog[]) => {
+  return [
+    {
+      head: '序号',
+      paramName: 'key',
+      width: '50px',
+      format: (text, row, tableIndex) => {
+        return (
+          <h5>
+            <span className="bs-tbl-index">{tableIndex + 1}</span>
+          </h5>
+        );
+      }
+    },
+    {
+      head: '搜索结果',
+      paramName: 'name',
+      format: (text, row) => (
+        <a
+          className="bs-article-name-link"
+          rel="noreferrer"
+          href={`/articles/${row.id}`}
+          target="_blank"
+          dangerouslySetInnerHTML={{ __html: text }}></a>
+      )
+    }
+  ];
+};
 
 const getCells = (catalogs: Catalog[]) => {
   return [

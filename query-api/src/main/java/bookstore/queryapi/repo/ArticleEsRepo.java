@@ -6,9 +6,10 @@ import org.springframework.data.elasticsearch.annotations.Highlight;
 import org.springframework.data.elasticsearch.annotations.HighlightField;
 import org.springframework.data.elasticsearch.annotations.HighlightParameters;
 import org.springframework.data.elasticsearch.annotations.SourceFilters;
-import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
-import org.springframework.stereotype.Repository;import java.util.List;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 
 @Repository

@@ -46,3 +46,7 @@ interface ArticleInfo {
   content: string;
   createDate: Date;
 }
+
+interface WindowChangeInfo {
+  sm: boolean;
+}

@@ -64,7 +64,9 @@ public class ArticleController {
             //高亮属性
             var hlFiledValues = searchHit.getHighlightField("name");
             if (!hlFiledValues.isEmpty()) {
-                dto.setName(hlFiledValues.get(0));
+                //   dto.setName(hlFiledValues.get(0));
+                // @Mapping(target = "name", constant = "书籍名称测试结果")
+
             }
             return dto;
         }).toList();

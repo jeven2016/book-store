@@ -5,7 +5,7 @@ import bookstore.queryapi.es_document.ArticleEsDoc;
 import bookstore.queryapi.mapper.ArticleEsDocMapper;
 import bookstore.queryapi.repo.ArticleEsRepo;
 import bookstore.queryapi.repo.ArticleRepo;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
@@ -91,18 +91,18 @@ public class ArticleService {
         var queryBuilder = NativeQuery.builder();
 
         queryBuilder.withQuery(builder ->
-             builder.bool(b->{
-                 //名称分词匹配
-                if (StringUtils.hasText(name)){
-                    b=b.must(m-> m.match(condition-> condition.field("name").query(name)));
-                }
+                builder.bool(b -> {
+                    //名称分词匹配
+                    if (StringUtils.hasText(name)) {
+                        b = b.must(m -> m.match(condition -> condition.field("name").query(name)));
+                    }
 
-                 // 同时匹配catalogId
-                 if(StringUtils.hasText(catalogId)){
-                     b=b.must(m-> m.term(condition-> condition.field("catalogId").value(catalogId)));
-                 }
-                return b;
-            })
+                    // 同时匹配catalogId
+                    if (StringUtils.hasText(catalogId)) {
+                        b = b.must(m -> m.term(condition -> condition.field("catalogId").value(catalogId)));
+                    }
+                    return b;
+                })
         );
 
         //不包含content内容

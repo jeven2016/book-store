@@ -1,15 +1,18 @@
 import { Box, Container, Menu, Responsive, useMediaQuery } from 'react-windy-ui';
 import ArticleList from '@/pages/store/article/ArticleList';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { ArticleCatalogContext } from '@/common/Context';
-import { Catalog } from '@/Types';
+import { ArticleCatalogContext, WindowChangeContext } from '@/common/Context';
+import { ArticleCatalogContextValue, Catalog, WindowChangeInfo } from '@/Types';
 import AllArticles from '@/pages/store/article/AllArticles';
 
 export default function Content() {
-  const [selectedSubCatalogId, setSelectedSubCatalogId] = useState<string | null>(null);
-  const articleCatalogCtx = useContext(ArticleCatalogContext);
-  const { catalogs, selectedCatalogId } = articleCatalogCtx;
-  const { matches } = useMediaQuery(Responsive.sm.max);
+  const [selectedSubCatalogId, setSelectedSubCatalogId]: [
+    string | null,
+    (value: ((prevState: string | null) => string | null) | string | null) => void
+  ] = useState<string | null>(null);
+  const articleCatalogCtx: ArticleCatalogContextValue = useContext(ArticleCatalogContext);
+  const { catalogs, selectedCatalogId }: ArticleCatalogContextValue = articleCatalogCtx;
+  const { sm: matches }: WindowChangeInfo = useContext<WindowChangeInfo>(WindowChangeContext);
 
   let chd = [] as Catalog[];
 

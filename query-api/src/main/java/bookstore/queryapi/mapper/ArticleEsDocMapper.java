@@ -4,7 +4,8 @@ import bookstore.queryapi.document.ArticleDoc;
 import bookstore.queryapi.dto.ArticleDto;
 import bookstore.queryapi.es_document.ArticleEsDoc;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;import org.mapstruct.factory.Mappers;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
 @Mapper
 public interface ArticleEsDocMapper {

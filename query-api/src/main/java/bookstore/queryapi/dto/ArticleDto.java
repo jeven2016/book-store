@@ -14,7 +14,7 @@ public class ArticleDto implements Serializable {
 
     private String name;
 
-    private String Content;
+    private String content;
 
     private String catalogId;
 

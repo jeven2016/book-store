@@ -1,11 +1,11 @@
 $default_background: radial-gradient(
-                circle at left top,
-                rgba(98, 72, 213, 0.9) 15%,
-                #0c3f99e6 50%,
-                #043b9de6 85%
+  circle at left top,
+  rgba(98, 72, 213, 0.9) 15%,
+  #0c3f99e6 50%,
+  #043b9de6 85%
 );
 $default-box-shadow: rgb(0 0 0 / 10%) 0rem 0.25rem 0.375rem -0.0625rem,
-rgb(0 0 0 / 6%) 0rem 0.125rem 0.25rem -0.0625rem;
+  rgb(0 0 0 / 6%) 0rem 0.125rem 0.25rem -0.0625rem;
 
 $header-line-height: 4rem;
 $normal-line-height: 3rem;
@@ -26,18 +26,17 @@ $title-text-color: darken($primary-color, 10%);
 $search-input-border-radius: 0;
 
 html {
-  //font-size: 14px;
+  font-size: 16px;
   height: 100%;
 }
 
 body {
   font: 1rem/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial,
-  Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
   background: $body-background;
   color: $default-text-color;
   height: 100%;
 }
-
 
 #root {
   height: 100%;
@@ -57,7 +56,7 @@ body {
 .bs-panel-title {
   font-weight: normal;
   color: $title-text-color;
-  padding: 1rem 1.5rem 0;
+  padding: 1rem 1.5rem 0.5rem;
 }
 
 .bs-header-wrapper {
@@ -69,6 +68,8 @@ body {
 }
 
 .bs-header {
+  padding: 0.5rem;
+
   > .bs-header-logo {
     font-size: 2rem;
     font-weight: 500;
@@ -114,7 +115,6 @@ body {
 }
 
 .bs-content {
-
   .bs-content-panel {
     background: $light-background;
     margin-top: 1.5rem;
@@ -137,7 +137,6 @@ body {
         flex: 1 1 auto;
       }
     }
-
   }
 }
 
@@ -145,15 +144,18 @@ body {
   color: #24292f;
   cursor: pointer;
 
-  &:hover, &:focus, &:active, &.active {
+  &:hover,
+  &:focus,
+  &:active,
+  &.active {
     color: $primary-text-color;
     text-decoration: underline;
   }
 }
 
 .bs-book-list {
-  padding: 0 1.5rem 0 .5rem;
-  border-left: 1px solid #cccccc;
+  padding: 0 1.5rem 0 0.5rem;
+  //border-left: 1px solid #cccccc;
   margin-bottom: 1rem;
 
   table td {
@@ -188,5 +190,12 @@ body {
 .bs-tbl-index {
   color: #fff;
   background: lighten($default-text-color, 10%);
-  padding: .25rem;
+  padding: 0.25rem;
+}
+
+.bs-all-catalogs {
+  .wui-box-left {
+    flex: 0 0 6.25rem;
+    padding: 0.5rem 0;
+  }
 }

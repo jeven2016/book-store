@@ -3,7 +3,8 @@ package bookstore.queryapi.mapper;
 import bookstore.queryapi.document.ArticleCatalogDoc;
 import bookstore.queryapi.dto.ArticleCatalogDto;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;import org.mapstruct.factory.Mappers;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
 @Mapper
 public interface ArticleCatalogMapper {

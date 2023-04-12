@@ -1,6 +1,6 @@
 module tools
 
-go 1.18
+go 1.19
 
 require github.com/go-dedup/simhash v0.0.0-20170904020510-9ecaca7b509c
 

@@ -14,9 +14,9 @@ import {
 } from 'react-windy-ui';
 import ArticleCatalogs from './ArticleCatalogs';
 import Content from '@/pages/store/article/Content';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArticleCatalogContext, ArticleSearchCtx } from '@/common/Context';
-import { Catalog } from '@/Types';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ArticleCatalogContext, ArticleSearchCtx, WindowChangeContext } from '@/common/Context';
+import { Catalog, WindowChangeInfo } from '@/Types';
 import { buildUrl } from '@/common/utils';
 import { get } from '@/client/Request';
 
@@ -25,6 +25,7 @@ export default function Home() {
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
+  const { matches: smMatches } = useMediaQuery(Responsive.sm.max);
 
   useEffect(() => {
     get(buildUrl('/article-catalogs')).then((data) => {
@@ -50,26 +51,33 @@ export default function Home() {
     [catalogs, selectedCatalogId]
   );
 
-  const searchArticles = useCallback(() => {}, []);
+  const windowChange = useMemo(
+    () => ({
+      sm: smMatches
+    }),
+    [smMatches]
+  );
 
   return (
     <ArticleCatalogContext.Provider value={providerValue}>
-      <Header
-        search={search}
-        setSearch={setSearch}
-        changeArticleCatalog={changeArticleCatalog}
-        setSearchText={setSearchText}
-      />
-      <ArticleSearchCtx.Provider value={{ name: searchText }}>
-        <Content />
-      </ArticleSearchCtx.Provider>
+      <WindowChangeContext.Provider value={windowChange}>
+        <Header
+          search={search}
+          setSearch={setSearch}
+          changeArticleCatalog={changeArticleCatalog}
+          setSearchText={setSearchText}
+        />
+        <ArticleSearchCtx.Provider value={{ name: searchText }}>
+          <Content />
+        </ArticleSearchCtx.Provider>
+      </WindowChangeContext.Provider>
     </ArticleCatalogContext.Provider>
   );
 }
 
 function Header(props) {
   const { search, setSearch, changeArticleCatalog, setSearchText } = props;
-  const { matches } = useMediaQuery(Responsive.sm.max);
+  const { sm }: WindowChangeInfo = useContext<WindowChangeInfo>(WindowChangeContext);
 
   const doSearch = useCallback(() => {
     changeArticleCatalog('all');
@@ -81,12 +89,12 @@ function Header(props) {
       <div className="bs-header-wrapper">
         <Container extraClassName="bs-header-wrapper" autoAdjust={true}>
           <Row justify="center" align="center" extraClassName="bs-header">
-            {!matches && (
+            {!sm && (
               <Col extraClassName="bs-header-logo" align="center" flexCol={true} col={2}>
                 图书馆
               </Col>
             )}
-            <Col col={matches ? 12 : 8} justify="center" flexCol={true}>
+            <Col col={sm ? 12 : 8} justify="center" flexCol={true}>
               <InputGroup size="small" extraClassName="bs-header-search-input">
                 <Input
                   extraClassName="bs-input-search"
@@ -106,7 +114,7 @@ function Header(props) {
                 </InputGroup.Item>
               </InputGroup>
             </Col>
-            <Col co={matches ? 12 : 2} style={{ marginTop: matches ? '.5rem' : '0' }}>
+            <Col co={sm ? 12 : 2} style={{ marginTop: sm ? '.5rem' : '0' }}>
               <Space>
                 <Button leftIcon={<IconStarBorder />} hasBorder={false} hasBox={false} size="small">
                   我的书架
