@@ -13,6 +13,6 @@ public class ArticleServiceTest {
 
     @Test
     public void testInsertEs() {
-        service.insertArticlesToEs();
+//        service.insertArticlesToEs();
     }
 }

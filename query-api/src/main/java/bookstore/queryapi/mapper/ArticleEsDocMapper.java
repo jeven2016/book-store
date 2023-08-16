@@ -11,10 +11,10 @@ import org.mapstruct.factory.Mappers;
 public interface ArticleEsDocMapper {
     ArticleEsDocMapper INSTANCE = Mappers.getMapper(ArticleEsDocMapper.class);
 
-    //    @Mapping(source = "id", target = "mongoId")
+//    @Mapping(source = "id", target = "mongoId")
     ArticleEsDoc toEsDoc(ArticleDoc mongoDoc);
 
-//    @Mapping(target = "name", constant = "书籍名称测试结果")
-//    @Mapping(target = "content", constant = "内容结果：书籍名称测试结果")
+    @Mapping(target = "name", constant = "书籍名称测试结果")
+    @Mapping(target = "content", constant = "内容结果：书籍名称测试结果")
     ArticleDto toDto(ArticleEsDoc doc);
 }

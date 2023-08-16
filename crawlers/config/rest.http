@@ -1,0 +1,31 @@
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "onej",
+  "displayName": "OneJAV BT资源",
+  "crawlerType": 1
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "64e41a54d0b1bddc5f0efff2",
+  "name": "test",
+  "url": "ww"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "64d77e2374e28c1458f97cdd",
+  "url": "https://onejav.com/actress/Fuua%20Kaede?page=89"
+}
+

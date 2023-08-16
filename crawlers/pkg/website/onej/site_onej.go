@@ -1,0 +1,171 @@
+package onej
+
+import (
+	"context"
+	"crawlers/pkg/common"
+	"crawlers/pkg/models"
+	"encoding/base64"
+	"github.com/go-resty/resty/v2"
+	"github.com/gocolly/colly/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/zap"
+	"strings"
+)
+
+type SiteOnej struct {
+	redis       *common.Redis
+	mongoClient *common.MongoClient
+	logger      *zap.Logger
+	colly       *colly.Collector
+	siteCfg     *common.SiteConfig
+	client      *resty.Client
+}
+
+func NewSiteOnej() *SiteOnej {
+	sys := common.GetSystem()
+	cfg, err := common.GetSiteConfig(common.SiteOneJ)
+	if err != nil {
+		sys.Log.Sugar().Error("Could not find site config", zap.Error(err))
+		return nil
+	}
+
+	return &SiteOnej{
+		redis:       sys.RedisClient,
+		mongoClient: sys.MongoClient,
+		logger:      sys.Log,
+		colly:       common.NewCollector(sys.Log),
+		siteCfg:     cfg,
+		client:      resty.New(),
+	}
+}
+
+const maxActressNumberLimit = 4
+const imgSrcKey = "imgSrc"
+const attachmentUriKey = "attachmentUri"
+const directory = "directory"
+
+// HandleCatalogPage 解析每一页
+func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *models.CatalogPageTask) ([]models.NovelTask, error) {
+	collyCtx := colly.NewContext()
+
+	url := catalogPageMsg.Url
+	base64Url := base64.StdEncoding.EncodeToString([]byte(url))
+	if result, err := s.redis.Client.Exists(ctx, base64Url).Result(); err != nil {
+		return nil, err
+	} else if result > 0 {
+		s.logger.Info("url has been handled, just ignores", zap.String("url", url))
+		return []models.NovelTask{}, nil
+	}
+
+	var novelMsgs []models.NovelTask
+
+	//遍历每一个面板进行解析
+	s.colly.OnHTML(".columns", func(element *colly.HTMLElement) {
+		name := element.ChildText(".title.is-4.is-spaced>a")
+
+		//只关心所允许的人员总数
+		actressNum := 0
+		element.ForEach(".panel-block", func(i int, element *colly.HTMLElement) {
+			actressNum = i
+		})
+		if actressNum >= maxActressNumberLimit {
+			s.logger.Info("actress number is large, just ignores", zap.Int("actressNum", actressNum),
+				zap.String("name", name), zap.String("url", url))
+		}
+
+		imgSrc := element.ChildAttr(".column>.image", "src")
+
+		//download button
+		attachmentUri := element.ChildAttr(".button.is-primary.is-fullwidth", "href")
+		if !strings.HasPrefix(attachmentUri, "http") {
+			attachmentUri = common.BuildUrl(url, attachmentUri)
+		}
+		novelMsgs = append(novelMsgs, models.NovelTask{
+			Name:      name,
+			CatalogId: catalogPageMsg.CatalogId,
+			Url:       imgSrc, //使用图片地址作为novel的首页地址
+			SiteName:  catalogPageMsg.SiteName,
+			Attributes: map[string]interface{}{
+				imgSrcKey:        imgSrc,
+				attachmentUriKey: attachmentUri,
+			},
+		})
+	})
+
+	if err := s.colly.Request("GET", url, nil, collyCtx, nil); err != nil {
+		println(collyCtx.Get("inValidPage"))
+		println(collyCtx.Get("retries"))
+		s.logger.Error("visit error", zap.String("url", url), zap.Error(err))
+		return nil, err
+	}
+
+	return novelMsgs, nil
+}
+
+// HandleNovelPage 解析具体的Novel
+func (s *SiteOnej) HandleNovelPage(ctx context.Context, novelPageMsg *models.NovelTask) ([]models.ChapterTask, error) {
+	s.logger.Info("Got novel message", zap.String("name", novelPageMsg.Name))
+
+	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
+		//获取catalog name
+		catalogName, err := common.GetKey(ctx, s.redis.Client, novelPageMsg.CatalogId.String(), func() (string, error) {
+			catlogCol := common.GetSystem().GetCollection(common.CatalogCollection)
+			var catalogMsg models.CatalogTask
+			if err := catlogCol.FindOne(ctx, bson.M{common.ColumId: novelPageMsg.CatalogId}).Decode(&catalogMsg); err != nil {
+				return "", err
+			} else {
+				return catalogMsg.Name, nil
+			}
+		})
+		if err != nil {
+			zap.L().Error("catalog not found", zap.String("catalogId", novelPageMsg.CatalogId.String()), zap.Error(err))
+			return nil, err
+		}
+
+		//以catalog name为根目录
+		destDir := picDir + "/" + catalogName
+
+		//下载图片
+		if imgUrl, ok := novelPageMsg.Attributes[imgSrcKey]; ok {
+			imgUrlString := imgUrl.(string)
+			localFile := strings.TrimRight(destDir, "/") + "/" + strings.ToLower(novelPageMsg.Name) + ".jpg"
+			restyClient, err := common.GetRestyClient(imgUrlString)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, err := restyClient.R().SetOutput(localFile).Get(imgUrlString); err != nil {
+				s.logger.Error("download image error", zap.String("url", imgUrlString), zap.Error(err))
+				return nil, err
+			} else {
+				s.logger.Info("image downloaded", zap.String("url", imgUrlString), zap.String("localFile", localFile))
+			}
+		}
+
+		//下载附件
+		if attachmentUrl, ok := novelPageMsg.Attributes[attachmentUriKey]; ok {
+			attachUrlString := attachmentUrl.(string)
+			restyAttClient, err := common.GetRestyClient(attachUrlString)
+			if err != nil {
+				return nil, err
+			}
+
+			lastSlashIndex := strings.LastIndex(attachUrlString, "/")
+			attFile := strings.TrimRight(destDir, "/") + "/" + attachUrlString[lastSlashIndex+1:]
+			attFile = strings.ReplaceAll(attFile, "onejav.com_", "")
+			if _, err := restyAttClient.R().SetOutput(attFile).Get(attachUrlString); err != nil {
+				s.logger.Error("download attachment error", zap.String("url", attachUrlString), zap.Error(err))
+				return nil, err
+			} else {
+				s.logger.Info("attachment downloaded", zap.String("url", attachUrlString), zap.String("localFile", attFile))
+			}
+		}
+	}
+
+	return []models.ChapterTask{}, nil
+}
+
+func (s *SiteOnej) DownloadHomePage(ctx context.Context, url string) error {
+	//TODO implement me
+	panic("implement me")
+}

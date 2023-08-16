@@ -1,0 +1,5 @@
+{"level":"error","time":"2022-10-19 17:13:35.470","line":"yzs8/common.go:54","msg":"Cannot connect to redis","error":"context deadline exceeded"}
+{"level":"error","time":"2022-10-19 17:13:35.471","line":"yzs8/download.go:337","msg":"error occurs","error":"context deadline exceeded"}
+{"level":"info","time":"2022-10-19 17:13:35.473","line":"yzs8/download.go:126","msg":"catalog id is","id":"634fb947c3e523eb51105b68"}
+{"level":"info","time":"2022-10-19 17:13:35.476","line":"yzs8/download.go:126","msg":"catalog id is","id":"634fb947c3e523eb51105b68"}
+{"level":"error","time":"2022-10-19 17:13:35.476","line":"yzs8/download.go:159","msg":"生成一个collector对象, 限速配置失败","error":"No pattern defined in LimitRule"}
