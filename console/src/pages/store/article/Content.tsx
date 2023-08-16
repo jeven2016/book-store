@@ -1,4 +1,4 @@
-import { Box, Container, Menu, Responsive, useMediaQuery } from 'react-windy-ui';
+import { Box, Container, Menu } from 'react-windy-ui';
 import ArticleList from '@/pages/store/article/ArticleList';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { ArticleCatalogContext, WindowChangeContext } from '@/common/Context';
