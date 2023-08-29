@@ -170,4 +170,6 @@ func (n *NsfCrawler) HandleChapterPage(ctx context.Context, chapterMsg *model.Ch
 		return
 	}
 
+	_, err = dao.ContentDao.Insert(ctx, content)
+	return
 }

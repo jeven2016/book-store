@@ -11,21 +11,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type ChapterInterface interface {
+type chapterInterface interface {
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error)
 	BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error
 }
 
-type ChapterDaoImpl struct{}
+type chapterDaoImpl struct{}
 
-func (n *ChapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
+func (n *chapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
 	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &model.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }
 
-func (n *ChapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error) {
+func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error) {
 	collection := common.GetSystem().GetCollection(common.CollectionChapter)
 	//for creating
 	if !novel.Id.IsZero() {
@@ -48,7 +48,7 @@ func (n *ChapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*pr
 	}
 }
 
-func (n *ChapterDaoImpl) BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error {
+func (n *chapterDaoImpl) BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error {
 	collection := common.GetSystem().GetCollection(common.CollectionChapter)
 
 	documents := make([]interface{}, len(chapters))

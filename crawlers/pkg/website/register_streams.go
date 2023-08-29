@@ -25,7 +25,19 @@ func RegisterStream() error {
 		return err
 	}
 
+	if err := chapterStream(pr); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+type StreamStepDefinition[T, R, E, U any] struct {
+	sourceStream        string
+	sourceConsumerGroup string
+	destinationStream   string
+	flowFlatMap         *flow.FlatMap[E, U]
+	convertFunc         flow.MapFunction[T, R]
 }
 
 // 解析page url得到每一个novel的url
@@ -94,18 +106,44 @@ func chapterStream(pr TaskProcessor) error {
 		return err
 	}
 
-	//item url
-	//sink := stream.NewRedisStreamSink(context.Background(), common.GetSystem().RedisClient,
-	//	stream.ChapterUrlStream)
-
 	paramsConvertFlow := flow.NewMap(pr.HandleChapterTask, consumersNumber)
 
-	flowMap := flow.NewFlatMap(func(novelMsg []model.ChapterTask) []model.ChapterTask {
-		return novelMsg
-	}, 1)
+	//flowMap := flow.NewFlatMap(func(novelMsg []model.ChapterTask) []model.ChapterTask {
+	//	return novelMsg
+	//}, 1)
 
 	err = common.GetSystem().TaskPool.Submit(func() {
-		source.Via(paramsConvertFlow).Via(flowMap)
+		source.Via(paramsConvertFlow)
+		//.Via(flowMap)
+	})
+	if err != nil {
+		zap.L().Error("failed to submit task", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+func launchStreamTask[T, R, E, U any](definition *StreamStepDefinition[T, R, E, U]) error {
+	source, err := stream.NewRedisStreamSource(context.Background(), common.GetSystem().RedisClient,
+		definition.sourceStream, definition.sourceConsumerGroup)
+	if err != nil {
+		return err
+	}
+
+	paramsConvertFlow := flow.NewMap(definition.convertFunc, consumersNumber)
+
+	err = common.GetSystem().TaskPool.Submit(func() {
+		fl := source.Via(paramsConvertFlow)
+		if definition.flowFlatMap != nil {
+			fl.Via(definition.flowFlatMap)
+		}
+		//item url
+		if definition.destinationStream != "" {
+			sink := stream.NewRedisStreamSink(context.Background(), common.GetSystem().RedisClient,
+				definition.destinationStream)
+			fl.To(sink)
+		}
+
 	})
 	if err != nil {
 		zap.L().Error("failed to submit task", zap.Error(err))

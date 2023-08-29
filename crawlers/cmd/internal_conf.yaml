@@ -47,3 +47,10 @@ webSites:
     attributes:
       directory: /home/cloud/Desktop/onej/
       consumers: 3
+  - name: nsf
+    crawlerSettings:
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      chapter:
+        skipIfPresent: true

@@ -175,7 +175,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	return
 }
 
-// 检查是否已经处理过的url
+// 检查是否已经处理过的url, 状态是finished状态
 func (t DefaultTaskProcessor) isDuplicatedNovelTask(cpTask *model.NovelTask, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
 	jsonString, err := common.GetAndSet(context.Background(), url, func() (*string, error) {

@@ -10,20 +10,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type NovelInterface interface {
+type novelInterface interface {
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error)
 }
 
-type NovelDaoImpl struct{}
+type novelDaoImpl struct{}
 
-func (n *NovelDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
+func (n *novelDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
 	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionNovel, &model.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }
 
-func (n *NovelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
+func (n *novelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
 	collection := common.GetSystem().GetCollection(common.CollectionNovel)
 	//for creating
 	if !novel.Id.IsZero() {

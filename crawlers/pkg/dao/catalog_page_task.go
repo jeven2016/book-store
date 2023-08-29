@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type CatalogPageTaskInterface interface {
+type catalogPageTaskInterface interface {
 	FindById(ctx context.Context, id primitive.ObjectID) (*model.CatalogPageTask, error)
 	FindByUrl(ctx context.Context, url string) (*model.CatalogPageTask, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
@@ -19,30 +19,30 @@ type CatalogPageTaskInterface interface {
 	Save(ctx context.Context, task *model.CatalogPageTask) (*primitive.ObjectID, error)
 }
 
-type CatalogPageTaskDaoImpl struct{}
+type catalogPageTaskDaoImpl struct{}
 
-func (c *CatalogPageTaskDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*model.CatalogPageTask, error) {
+func (c *catalogPageTaskDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*model.CatalogPageTask, error) {
 	return FindById(ctx, id, common.CollectionCatalogPageTask, &model.CatalogPageTask{})
 }
 
-func (c *CatalogPageTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.CatalogPageTask, error) {
+func (c *catalogPageTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.CatalogPageTask, error) {
 	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnUrl: url}, common.CollectionCatalogPageTask, &model.CatalogPageTask{})
 	return task, err
 }
 
-func (s *CatalogPageTaskDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
+func (s *catalogPageTaskDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
 	task, err := FindById(ctx, id, common.CollectionCatalogPageTask, &model.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }
 
-func (s *CatalogPageTaskDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
+func (s *catalogPageTaskDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
 	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionCatalogPageTask, &model.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }
 
-func (c *CatalogPageTaskDaoImpl) Save(ctx context.Context, task *model.CatalogPageTask) (*primitive.ObjectID, error) {
+func (c *catalogPageTaskDaoImpl) Save(ctx context.Context, task *model.CatalogPageTask) (*primitive.ObjectID, error) {
 	collection := common.GetSystem().GetCollection(common.CollectionCatalogPageTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + common.CollectionCatalogPageTask)

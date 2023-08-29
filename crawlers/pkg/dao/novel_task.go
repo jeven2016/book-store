@@ -11,19 +11,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type NovelTaskInterface interface {
+type novelTaskInterface interface {
 	FindByUrl(ctx context.Context, url string) (*model.NovelTask, error)
 	Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error)
 }
 
-type NovelTaskDaoImpl struct{}
+type novelTaskDaoImpl struct{}
 
-func (c *NovelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.NovelTask, error) {
+func (c *novelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.NovelTask, error) {
 	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnUrl: url}, common.CollectionNovelTask, &model.NovelTask{})
 	return task, err
 }
 
-func (c *NovelTaskDaoImpl) Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error) {
+func (c *novelTaskDaoImpl) Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error) {
 	collection := common.GetSystem().GetCollection(common.CollectionNovelTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + common.CollectionNovelTask)

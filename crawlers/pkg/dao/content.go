@@ -3,21 +3,20 @@ package dao
 import (
 	"context"
 	"crawlers/pkg/common"
-	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type ContentInterface interface {
+type contentInterface interface {
 	ExistsByParentId(ctx context.Context, id primitive.ObjectID) (bool, error)
 	Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error)
 }
 
-type ContentDaoImpl struct{}
+type contentDaoImpl struct{}
 
-func (c *ContentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
+func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
 	collection := common.GetSystem().GetCollection(common.CollectionContent)
 	//for creating
 	if !content.Id.IsZero() {
@@ -40,8 +39,8 @@ func (c *ContentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 	}
 }
 
-func (c *ContentDaoImpl) ExistsByParentId(ctx context.Context, id primitive.ObjectID) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &model.CatalogPageTask{},
+func (c *contentDaoImpl) ExistsByParentId(ctx context.Context, parentId primitive.ObjectID) (bool, error) {
+	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnParentId: parentId}, common.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }

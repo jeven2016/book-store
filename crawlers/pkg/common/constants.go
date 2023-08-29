@@ -24,6 +24,7 @@ const (
 	ColumnUrl       = "url"
 	ColumnSiteName  = "siteName"
 	ColumnNovelId   = "novelId"
+	ColumnParentId  = "parentId"
 
 	AttrAuthor = "author"
 )

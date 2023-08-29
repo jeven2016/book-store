@@ -1,19 +1,21 @@
 package dao
 
-var CatalogDao CatalogInterface
-var SiteDao SiteInterface
-var CatalogPageTaskDao CatalogPageTaskInterface
-var NovelTaskDao NovelTaskInterface
-var NovelDao NovelInterface
-var ChapterDao ChapterInterface
-var ChapterTaskDao ChapterTaskInterface
+var CatalogDao catalogInterface
+var SiteDao siteInterface
+var CatalogPageTaskDao catalogPageTaskInterface
+var NovelTaskDao novelTaskInterface
+var NovelDao novelInterface
+var ChapterDao chapterInterface
+var ChapterTaskDao chapterTaskInterface
+var ContentDao contentInterface
 
 func InitDao() {
-	CatalogDao = &CatalogDaoImpl{}
-	SiteDao = &SiteDaoImpl{}
-	CatalogPageTaskDao = &CatalogPageTaskDaoImpl{}
-	NovelTaskDao = &NovelTaskDaoImpl{}
-	NovelDao = &NovelDaoImpl{}
-	ChapterDao = &ChapterDaoImpl{}
-	ChapterTaskDao = &ChapterTaskDaoImpl{}
+	CatalogDao = &catalogDaoImpl{}
+	SiteDao = &siteDaoImpl{}
+	CatalogPageTaskDao = &catalogPageTaskDaoImpl{}
+	NovelTaskDao = &novelTaskDaoImpl{}
+	NovelDao = &novelDaoImpl{}
+	ChapterDao = &chapterDaoImpl{}
+	ChapterTaskDao = &chapterTaskDaoImpl{}
+	ContentDao = &contentDaoImpl{}
 }

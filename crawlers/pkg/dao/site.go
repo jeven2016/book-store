@@ -9,18 +9,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type SiteInterface interface {
+type siteInterface interface {
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
 }
 
-type SiteDaoImpl struct{}
+type siteDaoImpl struct{}
 
-func (s *SiteDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error) {
+func (s *siteDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error) {
 	return FindById(ctx, id, common.CollectionSite, &entity.Site{})
 }
 
-func (s *SiteDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
+func (s *siteDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
 	site, err := FindById(ctx, id, common.CollectionSite, &entity.Site{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return site != nil, err
