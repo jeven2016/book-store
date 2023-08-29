@@ -114,22 +114,22 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	}
 	zap.L().Info("novel task", zap.String("json", jsonData))
 
-	//check if page url is duplicated
-	exists, err := d.isDuplicatedNovelTask(&NovelTask,
-		common.CollectionNovelTask,
-		NovelTask.Url,
-		bson.M{
-			common.ColumnCatalogId: NovelTask.CatalogId, //catalogPageTask.catalogId
-			common.ColumnUrl:       NovelTask.Url,       //catalogPageTask.Url
-		})
-	if err != nil {
-		zap.L().Warn("error occurs", zap.Error(err))
-		return nil
-	}
-	if exists {
-		zap.L().Warn("duplicated novel to crawl", zap.String("jsonData", jsonData))
-		return nil
-	}
+	////check if page url is duplicated
+	//exists, err := d.isDuplicatedNovelTask(&NovelTask,
+	//	common.CollectionNovelTask,
+	//	NovelTask.Url,
+	//	bson.M{
+	//		common.ColumnCatalogId: NovelTask.CatalogId, //catalogPageTask.catalogId
+	//		common.ColumnUrl:       NovelTask.Url,       //catalogPageTask.Url
+	//	})
+	//if err != nil {
+	//	zap.L().Warn("error occurs", zap.Error(err))
+	//	return nil
+	//}
+	//if exists {
+	//	zap.L().Warn("duplicated novel to crawl", zap.String("jsonData", jsonData))
+	//	return nil
+	//}
 
 	downloader := GetSiteCrawler(NovelTask.SiteName)
 	if downloader == nil {

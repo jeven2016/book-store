@@ -42,10 +42,6 @@ const (
 )
 
 var ConfigFiles = []string{"/etc/crawlers.yaml", "./crawlers.yaml"}
-var SupportedCatalogs = []string{SiteOneJ, SiteYzs8}
-
-var CollectionNotFoundError = errors.New("collection not found")
-var ErrNonValueProvided = errors.New("null value provided for a specified key")
 
 type CrawlerResourceType int
 

@@ -89,6 +89,7 @@ loop:
 
 		select {
 		case <-ctx.Done():
+			zap.S().Info("cancelled fetching")
 			break loop
 		default:
 			rs.fetchFromStream()
