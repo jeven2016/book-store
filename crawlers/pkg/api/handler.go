@@ -3,12 +3,13 @@ package api
 import (
 	"crawlers/pkg/common"
 	"crawlers/pkg/dao"
-	"crawlers/pkg/models"
-	"crawlers/pkg/models/dto"
-	"crawlers/pkg/models/entity"
+	"crawlers/pkg/model"
+	"crawlers/pkg/model/dto"
+	"crawlers/pkg/model/entity"
 	"crawlers/pkg/stream"
 	"crawlers/pkg/website"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -25,7 +26,7 @@ func NewHandler() *Handler {
 }
 
 func (h *Handler) HandleCatalogPage(c *gin.Context) {
-	var pageReq models.CatalogPageTask
+	var pageReq model.CatalogPageTask
 	err := c.ShouldBindJSON(&pageReq)
 	if err != nil {
 		zap.L().Warn("failed to convert json", zap.Error(err))
@@ -34,26 +35,20 @@ func (h *Handler) HandleCatalogPage(c *gin.Context) {
 		return
 	}
 
-	var catalog *entity.Catalog
 	var site *entity.Site
-	if catalog, err = dao.CatalogDao.FindById(c, pageReq.CatalogId); err != nil {
-		zap.L().Warn("catalog does not exist", zap.String("catalogId", pageReq.CatalogId.Hex()), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrCatalogNotFound, pageReq.CatalogId.String()))
-		return
-	}
-	if site, err = dao.SiteDao.FindById(c, catalog.SiteId); err != nil {
-		zap.L().Warn("site does not exist", zap.String("siteId", catalog.SiteId.Hex()), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrSiteNotFound, pageReq.CatalogId.String()))
+	var hasError bool
+	if site, hasError = h.getTaskEntity(c, pageReq.CatalogId); hasError {
 		return
 	}
 
 	//if multiple pages need to handle
-	if sp := website.GetSiteProcessor(site.Name); sp == nil {
+	if sp := website.GetSiteTaskProcessor(site.Name); sp == nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, common.Fails(common.ErrCodeUnSupportedCatalog))
-		h.sys.Log.Warn("no processor found for this siteKey", zap.String("siteKey", pageReq.SiteName))
+		h.sys.Log.Warn("no processor found for this siteKey", zap.String("siteKey", site.Name))
 		return
 	} else {
-		urls, err := sp.ProcessPageUrls(pageReq.Url)
+		//parse all page urls if page parameter is specified in such format: page=1-5
+		urls, err := sp.ParsePageUrls(site.Name, pageReq.Url)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrParsePageUrl, err.Error()))
 			h.sys.Log.Warn("failed to process pageUrl",
@@ -62,10 +57,11 @@ func (h *Handler) HandleCatalogPage(c *gin.Context) {
 		}
 
 		for _, url := range urls {
-			pageMsg := &models.CatalogPageTask{
+			pageMsg := &model.CatalogPageTask{
 				SiteName:  site.Name,
 				CatalogId: pageReq.CatalogId,
 				Url:       url,
+				Status:    common.TaskStatusNotStared,
 			}
 			if err := common.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError,
@@ -79,6 +75,55 @@ func (h *Handler) HandleCatalogPage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusAccepted, common.SuccessCode(common.ErrCodeTaskSubmitted))
+}
+
+func (h *Handler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID) (site *entity.Site, hasError bool) {
+	var err error
+	var catalog *entity.Catalog
+	catalogStringId := catalogId.Hex()
+	siteStringId := catalogId.Hex()
+	if catalog, err = dao.CatalogDao.FindById(c, catalogId); err != nil {
+		zap.L().Warn("catalog does not exist", zap.String("catalogId", catalogStringId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrCatalogNotFound, catalogStringId))
+		hasError = true
+		return
+	}
+	if site, err = dao.SiteDao.FindById(c, catalog.SiteId); err != nil {
+		zap.L().Warn("site does not exist", zap.String("siteId", siteStringId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrSiteNotFound, siteStringId))
+		hasError = true
+		return
+	}
+	return
+}
+
+func (h *Handler) HandleNovelPage(c *gin.Context) {
+	var novelTask model.NovelTask
+	err := c.ShouldBindJSON(&novelTask)
+	if err != nil {
+		zap.L().Warn("failed to convert json", zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+		return
+	}
+
+	var site *entity.Site
+	var hasError bool
+
+	if site, hasError = h.getTaskEntity(c, novelTask.CatalogId); hasError {
+		return
+	}
+	novelTask.Name = site.Name
+	novelTask.Status = common.TaskStatusNotStared
+	novelTask.SiteName = site.Name
+
+	if err := common.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			common.FailsWithParams(common.ErrPublishMessage, err.Error()))
+		h.sys.Log.Warn("failed to publish a message",
+			zap.String("pageUrl", novelTask.Url), zap.Error(err))
+		return
+	}
 }
 
 func (h *Handler) CreateSite(c *gin.Context) {
@@ -97,7 +142,7 @@ func (h *Handler) CreateSite(c *gin.Context) {
 		Key:           "site",
 		Name:          site.Name,
 		Entity:        site,
-		Collection:    common.SiteCollection,
+		Collection:    common.CollectionSite,
 		RedisCacheKey: common.GenKey(common.SiteKeyExistsPrefix, site.Name),
 	})
 }
@@ -133,7 +178,7 @@ func (h *Handler) CreateCatalog(c *gin.Context) {
 		Key:           "catalog",
 		Name:          catalog.Name,
 		Entity:        catalog,
-		Collection:    common.CatalogCollection,
+		Collection:    common.CollectionCatalog,
 		RedisCacheKey: common.GenKey(common.CatalogKeyExistsPrefix, catalog.Name),
 	})
 }

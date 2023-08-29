@@ -35,6 +35,7 @@ type Novel struct {
 	CatalogId   primitive.ObjectID     `bson:"catalogId,omitempty" json:"catalogId" binding:"required"`
 	Name        string                 `bson:"name" json:"name" binding:"required"`
 	Order       int                    `bson:"order" json:"order"`
+	HasChapters bool                   `bson:"hasChapters" json:"hasChapters"`
 	Description string                 `bson:"description" json:"description"`
 	Attributes  map[string]interface{} `bson:"attributes" json:"attributes"`
 
@@ -55,8 +56,11 @@ type Chapter struct {
 }
 
 type Content struct {
-	Id      primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Content string             `bson:"content" json:"content"`
+	Id         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ParentId   primitive.ObjectID `bson:"parentId,omitempty" json:"parentId"`
+	ParentType string             `bson:"parentType,omitempty" json:"parentType"` //chapter or novel
+	Page       uint32             `bson:"page,omitempty" json:"page"`
+	Content    string             `bson:"content" json:"content"`
 
 	CreatedTime *time.Time `bson:"created" bson:"createdTime"`
 	UpdatedTime *time.Time `bson:"updated" bson:"updatedTime"`

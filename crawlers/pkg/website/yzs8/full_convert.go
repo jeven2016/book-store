@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"crawlers/pkg/models"
+	"crawlers/pkg/model"
 )
 
 // converting
@@ -28,7 +28,7 @@ func ConvertCatalog() {
 
 	cur, err := catalogCol.Find(context.Background(), bson.M{})
 
-	var results = new([]models.CatalogDocMap)
+	var results = new([]model.CatalogDocMap)
 	err = cur.All(context.Background(), results)
 	handleError(err)
 
@@ -92,7 +92,7 @@ func ConvertArticle() {
 		if i%10000 == 0 {
 			print("completed ", i)
 		}
-		var c *models.ArticleMap
+		var c *model.ArticleMap
 		err := cur.Decode(&c)
 		handleError(err)
 		if err == nil {

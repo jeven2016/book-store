@@ -8,27 +8,41 @@ import (
 	"strings"
 )
 
-type valueProvider func() (string, error)
+type valueProvider func() (*string, error)
 
-// GetKey get a value from cache by key if presents otherwise set by value provider
-func GetKey(ctx context.Context, cache *redis.Client,
-	key string, callback valueProvider) (string, error) {
-	value, err := cache.Get(ctx, key).Result()
+// GetAndSet get a value from cache by key if presents otherwise set by value provider
+func GetAndSet(ctx context.Context, key string, callback valueProvider) (val *string, err error) {
+	value, err := GetSystem().RedisClient.Client.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			value, err = callback()
+			val, err = callback()
 			if err != nil {
-				return "", err
+				return
 			}
-
-			if _, err = cache.Set(ctx, key, value, GenExpireTime()).Result(); err != nil {
-				return "", err
+			if val == nil {
+				return
 			}
+			if _, err = GetSystem().RedisClient.Client.Set(ctx, key, *val, GenExpireTime()).Result(); err != nil {
+				return nil, err
+			}
+			return
 		} else {
-			return "", err
+			return
 		}
 	}
-	return value, err
+	return &value, err
+}
+
+func GetKey(ctx context.Context, key string) (*string, error) {
+	value, err := GetSystem().RedisClient.Client.Get(ctx, key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &value, err
 }
 
 func Exists(ctx context.Context, key string, searchMongoFunc func() (any, error)) (bool, error) {

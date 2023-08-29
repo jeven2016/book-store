@@ -3,9 +3,12 @@ POST http://localhost:8080/sites
 content-type: application/json
 
 {
-  "name": "onej",
-  "displayName": "OneJAV BT资源",
-  "crawlerType": 1
+  "name": "nsf",
+  "displayName": "nsf图书",
+  "crawlerType": 3,
+  "attributes": {
+    "siteUrl": "https://www.nosadfun.com"
+  }
 }
 
 
@@ -14,9 +17,9 @@ POST http://localhost:8080/catalogs
 content-type: application/json
 
 {
-  "siteId": "64e41a54d0b1bddc5f0efff2",
-  "name": "test",
-  "url": "ww"
+  "siteId": "64ea11b58b1f9d5c2e308b8a",
+  "name": "武侠",
+  "url": "https://www.nosadfun.com/category/8/"
 }
 
 
@@ -25,7 +28,7 @@ POST http://localhost:8080/tasks/catalog-pages
 Content-Type: application/json
 
 {
-  "catalogId": "64d77e2374e28c1458f97cdd",
+  "catalogId": "64ea12bb8b1f9d5c2e308b8b",
   "url": "https://onejav.com/actress/Fuua%20Kaede?page=89"
 }
 
@@ -35,6 +38,6 @@ POST http://localhost:8080/tasks/novels
 Content-Type: application/json
 
 {
-  "catalogId": "64d77e2374e28c1458f97cdd",
-  "url": "https://onejav.com/actress/Fuua%20Kaede?page=89"
+  "catalogId": "64ea12bb8b1f9d5c2e308b8b",
+  "url": "https://www.nosadfun.com/book/37994/"
 }

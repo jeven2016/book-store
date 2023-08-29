@@ -18,16 +18,16 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
-	"crawlers/pkg/models"
+	"crawlers/pkg/model"
 )
 
-var articlesChan = make(chan *models.ArticlePage, 100)
+var articlesChan = make(chan *model.ArticlePage, 100)
 
 var wg = sync.WaitGroup{}
 
 var baseUrl string
 
-var log = zap.S()
+var log = zap.L()
 
 var waitIndex = atomic.NewInt32(0)
 
@@ -66,24 +66,22 @@ func Start() {
 }
 
 func ensure(catalogCol *mongo.Collection) (*primitive.ObjectID, bool) {
-	c := &models.CatalogDoc{
-		Name:         "--",
-		Order:        1,
-		ArticleCount: 0,
-		Description:  "",
-		CreateDate:   time.Now(),
-		LastUpdate:   time.Now(),
+	c := &model.CatalogDoc{
+		Name:        "--",
+		Order:       1,
+		Description: "",
+		CreateDate:  time.Now(),
+		LastUpdate:  time.Now(),
 	}
 	id, succeed := ensureCollection(catalogCol, c)
 	if succeed {
-		c := &models.CatalogDoc{
-			Name:         "--",
-			ParentId:     *id,
-			Order:        11,
-			ArticleCount: 0,
-			Description:  "--",
-			CreateDate:   time.Now(),
-			LastUpdate:   time.Now(),
+		c := &model.CatalogDoc{
+			Name:        "--",
+			ParentId:    *id,
+			Order:       11,
+			Description: "--",
+			CreateDate:  time.Now(),
+			LastUpdate:  time.Now(),
 		}
 		id, succeed = ensureCollection(catalogCol, c)
 		return id, succeed
@@ -92,7 +90,7 @@ func ensure(catalogCol *mongo.Collection) (*primitive.ObjectID, bool) {
 }
 
 // ensure valid catalog id to return
-func ensureCollection(catalogCol *mongo.Collection, catalog *models.CatalogDoc) (*primitive.ObjectID, bool) {
+func ensureCollection(catalogCol *mongo.Collection, catalog *model.CatalogDoc) (*primitive.ObjectID, bool) {
 	result := catalogCol.FindOne(context.TODO(), bson.M{"name": catalog.Name})
 	err := result.Err()
 	if err != nil {
@@ -106,7 +104,7 @@ func ensureCollection(catalogCol *mongo.Collection, catalog *models.CatalogDoc) 
 		}
 		return nil, false
 	}
-	catalog = new(models.CatalogDoc)
+	catalog = new(model.CatalogDoc)
 	err = result.Decode(catalog)
 	if err != nil {
 		return nil, false
@@ -118,7 +116,7 @@ func ensureCollection(catalogCol *mongo.Collection, catalog *models.CatalogDoc) 
 
 var at = atomic.NewInt32(1)
 
-func parsePageLinks(homeUrl string, collector *colly.Collector, urlChan chan<- *models.ArticlePage, zhConvertor sat.Dicter, redis *redis.Client) {
+func parsePageLinks(homeUrl string, collector *colly.Collector, urlChan chan<- *model.ArticlePage, zhConvertor sat.Dicter, redis *redis.Client) {
 	ctx := colly.NewContext()
 	// key: page url
 	// cacheKey := base64.StdEncoding.EncodeToString([]byte(homeUrl))
@@ -142,7 +140,7 @@ func parsePageLinks(homeUrl string, collector *colly.Collector, urlChan chan<- *
 				}
 			}
 
-			artPage := &models.ArticlePage{
+			artPage := &model.ArticlePage{
 				Name:    artName,
 				Url:     artUrl,
 				PageUrl: element.Request.Ctx.Get("pageUrl"),
@@ -178,7 +176,7 @@ func parsePageLinks(homeUrl string, collector *colly.Collector, urlChan chan<- *
 	handleError(collector.Request("GET", homeUrl, nil, ctx, nil))
 }
 
-func downloadArticle(collection *mongo.Collection, urlChan <-chan *models.ArticlePage, catalogId *primitive.ObjectID,
+func downloadArticle(collection *mongo.Collection, urlChan <-chan *model.ArticlePage, catalogId *primitive.ObjectID,
 	c *colly.Collector, zhConvertor sat.Dicter, client *redis.Client) {
 	// load article page and get the content to save
 	// .articleList>.content>div
@@ -188,7 +186,7 @@ func downloadArticle(collection *mongo.Collection, urlChan <-chan *models.Articl
 		// }
 		// waitIndex.Inc()
 
-		artPage := element.Request.Ctx.GetAny("articlePage").(*models.ArticlePage)
+		artPage := element.Request.Ctx.GetAny("articlePage").(*model.ArticlePage)
 		content, err := element.DOM.Html()
 		if err != nil {
 			log.Warn("failed to get the content",
@@ -207,7 +205,7 @@ func downloadArticle(collection *mongo.Collection, urlChan <-chan *models.Articl
 			content = content[:index]
 		}
 
-		_, err = collection.InsertOne(context.TODO(), models.Article{
+		_, err = collection.InsertOne(context.TODO(), model.Article{
 			Name:       artPage.Name,
 			CatalogId:  *catalogId,
 			Content:    content,

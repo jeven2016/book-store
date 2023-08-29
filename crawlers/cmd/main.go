@@ -4,7 +4,6 @@ import (
 	"crawlers/pkg/api"
 	"crawlers/pkg/common"
 	"crawlers/pkg/dao"
-	"crawlers/pkg/stream"
 	"crawlers/pkg/website"
 	_ "embed"
 	"fmt"
@@ -45,10 +44,10 @@ func run() {
 			})
 			if sys != nil {
 				common.SetSystem(sys)
-				website.InitJobHandlers()
+				website.RegisterProcessors()
 				dao.InitDao()
 
-				if err := stream.RegisterStream(); err != nil {
+				if err := website.RegisterStream(); err != nil {
 					sys.Log.Error("failed to register streams", zap.Error(err))
 					return
 				}

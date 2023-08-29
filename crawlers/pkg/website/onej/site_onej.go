@@ -3,7 +3,7 @@ package onej
 import (
 	"context"
 	"crawlers/pkg/common"
-	"crawlers/pkg/models"
+	"crawlers/pkg/model"
 	"encoding/base64"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
@@ -26,7 +26,6 @@ func NewSiteOnej() *SiteOnej {
 	cfg, err := common.GetSiteConfig(common.SiteOneJ)
 	if err != nil {
 		sys.Log.Sugar().Error("Could not find site config", zap.Error(err))
-		return nil
 	}
 
 	return &SiteOnej{
@@ -45,7 +44,7 @@ const attachmentUriKey = "attachmentUri"
 const directory = "directory"
 
 // HandleCatalogPage 解析每一页
-func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *models.CatalogPageTask) ([]models.NovelTask, error) {
+func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
 	collyCtx := colly.NewContext()
 
 	url := catalogPageMsg.Url
@@ -54,10 +53,10 @@ func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *models
 		return nil, err
 	} else if result > 0 {
 		s.logger.Info("url has been handled, just ignores", zap.String("url", url))
-		return []models.NovelTask{}, nil
+		return []model.NovelTask{}, nil
 	}
 
-	var novelMsgs []models.NovelTask
+	var novelMsgs []model.NovelTask
 
 	//遍历每一个面板进行解析
 	s.colly.OnHTML(".columns", func(element *colly.HTMLElement) {
@@ -80,7 +79,7 @@ func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *models
 		if !strings.HasPrefix(attachmentUri, "http") {
 			attachmentUri = common.BuildUrl(url, attachmentUri)
 		}
-		novelMsgs = append(novelMsgs, models.NovelTask{
+		novelMsgs = append(novelMsgs, model.NovelTask{
 			Name:      name,
 			CatalogId: catalogPageMsg.CatalogId,
 			Url:       imgSrc, //使用图片地址作为novel的首页地址
@@ -93,8 +92,10 @@ func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *models
 	})
 
 	if err := s.colly.Request("GET", url, nil, collyCtx, nil); err != nil {
-		println(collyCtx.Get("inValidPage"))
-		println(collyCtx.Get("retries"))
+		ip := collyCtx.GetAny("inValidPage")
+		println("ip=", ip)
+		retries := collyCtx.GetAny("retries")
+		println("retries=", retries)
 		s.logger.Error("visit error", zap.String("url", url), zap.Error(err))
 		return nil, err
 	}
@@ -103,27 +104,31 @@ func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *models
 }
 
 // HandleNovelPage 解析具体的Novel
-func (s *SiteOnej) HandleNovelPage(ctx context.Context, novelPageMsg *models.NovelTask) ([]models.ChapterTask, error) {
+func (s *SiteOnej) HandleNovelPage(ctx context.Context, novelPageMsg *model.NovelTask) ([]model.ChapterTask, error) {
 	s.logger.Info("Got novel message", zap.String("name", novelPageMsg.Name))
 
 	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
 		//获取catalog name
-		catalogName, err := common.GetKey(ctx, s.redis.Client, novelPageMsg.CatalogId.String(), func() (string, error) {
-			catlogCol := common.GetSystem().GetCollection(common.CatalogCollection)
-			var catalogMsg models.CatalogTask
+		catalogName, err := common.GetAndSet(ctx, novelPageMsg.CatalogId.String(), func() (*string, error) {
+			catlogCol := common.GetSystem().GetCollection(common.CollectionCatalog)
+			var catalogMsg model.CatalogTask
 			if err := catlogCol.FindOne(ctx, bson.M{common.ColumId: novelPageMsg.CatalogId}).Decode(&catalogMsg); err != nil {
-				return "", err
+				return nil, err
 			} else {
-				return catalogMsg.Name, nil
+				return &catalogMsg.Name, nil
 			}
 		})
 		if err != nil {
 			zap.L().Error("catalog not found", zap.String("catalogId", novelPageMsg.CatalogId.String()), zap.Error(err))
 			return nil, err
 		}
+		if catalogName == nil {
+			zap.L().Error("catalog not found", zap.String("catalog", "[nil]"))
+			return nil, err
+		}
 
 		//以catalog name为根目录
-		destDir := picDir + "/" + catalogName
+		destDir := picDir + "/" + *catalogName
 
 		//下载图片
 		if imgUrl, ok := novelPageMsg.Attributes[imgSrcKey]; ok {
@@ -162,10 +167,13 @@ func (s *SiteOnej) HandleNovelPage(ctx context.Context, novelPageMsg *models.Nov
 		}
 	}
 
-	return []models.ChapterTask{}, nil
+	return []model.ChapterTask{}, nil
 }
 
-func (s *SiteOnej) DownloadHomePage(ctx context.Context, url string) error {
+func (s *SiteOnej) HandleHomePage(ctx context.Context, url string) error {
 	//TODO implement me
+	panic("implement me")
+}
+func (s *SiteOnej) HandleChapterPage(ctx context.Context, chapterMsg *model.ChapterTask) error {
 	panic("implement me")
 }

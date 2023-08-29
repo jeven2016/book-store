@@ -26,6 +26,7 @@ func RegisterEndpoints() *gin.Engine {
 	engine.POST("/catalogs", hd.CreateCatalog)
 	engine.POST("/sites", hd.CreateSite)
 	engine.POST("/tasks/catalog-pages", hd.HandleCatalogPage)
+	engine.POST("/tasks/novels", hd.HandleNovelPage)
 
 	return engine
 }
