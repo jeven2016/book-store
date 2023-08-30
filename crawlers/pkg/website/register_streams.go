@@ -113,7 +113,7 @@ func chapterStream(pr TaskProcessor) error {
 	//}, 1)
 
 	err = common.GetSystem().TaskPool.Submit(func() {
-		source.Via(paramsConvertFlow)
+		source.Via(paramsConvertFlow).To(&BlankSink{})
 		//.Via(flowMap)
 	})
 	if err != nil {
@@ -149,5 +149,12 @@ func launchStreamTask[T, R, E, U any](definition *StreamStepDefinition[T, R, E, 
 		zap.L().Error("failed to submit task", zap.Error(err))
 		return err
 	}
+	return nil
+}
+
+type BlankSink struct {
+}
+
+func (b *BlankSink) In() chan<- interface{} {
 	return nil
 }

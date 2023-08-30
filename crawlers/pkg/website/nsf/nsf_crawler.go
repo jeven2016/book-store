@@ -6,6 +6,7 @@ import (
 	"crawlers/pkg/dao"
 	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
+	"github.com/chromedp/chromedp"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/go-creed/sat"
 	"github.com/go-resty/resty/v2"
@@ -41,10 +42,11 @@ func NewNsfCrawler() *NsfCrawler {
 	}
 }
 
-const maxActressNumberLimit = 4
-const imgSrcKey = "imgSrc"
-const attachmentUriKey = "attachmentUri"
-const directory = "directory"
+var removeTexts = []string{
+	"<p>更*多`精;彩'小*说'尽|在'ｗ'ｗ'ｗ．''Ｂ'．'Ｅ'第&amp;#*站</p><p>\");</p>",
+	"<p>ThisfilewassavedusingUNREGISTEREDversionofChmDecompiler.</p><p>DownloadChmDecompilerat:（结尾英文忽略即可）</p>",
+	"<p>##</p><p>ThefilewassavedusingTrialversionofChmDecompiler.</p><p>DownloadChmDecompilerfrom:（结尾英文忽略即可）</p>",
+}
 
 // HandleCatalogPage 解析每一页
 func (n *NsfCrawler) HandleCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
@@ -156,20 +158,23 @@ func (n *NsfCrawler) HandleChapterPage(ctx context.Context, chapterMsg *model.Ch
 		ParentId:    chapterMsg.Id,
 		CreatedTime: &createdTime,
 	}
+	chromeCtx, cleanFunc := common.OpenChrome(context.Background())
+	defer cleanFunc()
 
-	// get content
-	n.colly.OnHTML(".RBGsectionThree-content", func(element *colly.HTMLElement) {
-		if cnt, domErr := element.DOM.Html(); domErr != nil {
-			zap.L().Error("failed to get content", zap.Any("chapterMsg", chapterMsg), zap.Error(domErr))
-			err = domErr
-		} else {
-			content.Content = cnt
-		}
-	})
-	if err = n.colly.Visit(chapterMsg.Url); err != nil {
+	var text string
+	err = chromedp.Run(chromeCtx,
+		chromedp.Navigate(chapterMsg.Url),
+		//chromedp.WaitNotPresent("//p[contains(text(),'内容未加载完成')]", chromedp.BySearch),
+		chromedp.InnerHTML("//div[@class='RBGsectionThree-content']", &text, chromedp.BySearch),
+	)
+	if err != nil {
 		return
 	}
+	for _, txt := range removeTexts {
+		text = strings.ReplaceAll(text, txt, "")
+	}
 
+	content.Content = text
 	_, err = dao.ContentDao.Insert(ctx, content)
 	return
 }

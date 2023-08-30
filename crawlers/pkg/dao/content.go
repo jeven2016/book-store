@@ -40,7 +40,7 @@ func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 }
 
 func (c *contentDaoImpl) ExistsByParentId(ctx context.Context, parentId primitive.ObjectID) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnParentId: parentId}, common.CollectionChapter, &entity.Chapter{},
+	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnParentId: parentId}, common.CollectionContent, &entity.Chapter{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }

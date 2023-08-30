@@ -123,6 +123,7 @@ func (rs *RedisStreamSource) fetchFromStream() {
 		messageID := entries[0].Messages[i].ID
 		jsonData := entries[0].Messages[i].Values[common.RedisStreamDataVar]
 		rs.out <- jsonData
+		zap.L().Info("send a message into channel")
 		rs.redisClient.Client.XAck(context.Background(), rs.streamName, rs.consumerGroup, messageID)
 		zap.S().Info("fetch a message from stream")
 	}

@@ -292,6 +292,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 
 	currentTime := time.Now()
 	if err = downloader.HandleChapterPage(context.Background(), &chapterTask); err != nil {
+		zap.L().Error("error occurred while downloading", zap.String("url", chapterTask.Url), zap.Error(err))
 		//save failed, update the status
 		if existingTask != nil {
 			if err = convertor.CopyProperties(&chapterTask, existingTask); err != nil {
