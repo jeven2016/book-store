@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crawlers/pkg/api"
 	"crawlers/pkg/common"
 	"crawlers/pkg/dao"
@@ -36,18 +37,24 @@ func run() {
 			}
 			common.SetConfig(cfg)
 
+			//global context
+			ctx, cancelFunc := context.WithCancel(context.Background())
 			sys := common.Startup(&common.StartupParams{
 				EnableEtcd:    false,
 				EnableMongodb: true,
 				EnableRedis:   true,
 				Config:        cfg,
+				ShutdownHook: func() error {
+					cancelFunc()
+					return nil
+				},
 			})
 			if sys != nil {
 				common.SetSystem(sys)
 				website.RegisterProcessors()
 				dao.InitDao()
 
-				if err := website.RegisterStream(); err != nil {
+				if err := website.RegisterStream(ctx); err != nil {
 					sys.Log.Error("failed to register streams", zap.Error(err))
 					return
 				}

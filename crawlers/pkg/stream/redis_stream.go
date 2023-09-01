@@ -4,12 +4,8 @@ import (
 	"context"
 	"crawlers/pkg/common"
 	"github.com/reugn/go-streams"
-	"go.uber.org/zap"
-
-	"github.com/redis/go-redis/v9"
 	"github.com/reugn/go-streams/flow"
-	"math/rand"
-	"strconv"
+	"go.uber.org/zap"
 )
 
 // this file forked and enhanced based on https://github.com/reugn/go-streams since I want to use go-redis/v9 and redis stream feature
@@ -33,7 +29,7 @@ type RedisStreamSource struct {
 func NewRedisStreamSource(ctx context.Context, client *common.Redis, streamName string,
 	consumerGroup string) (*RedisStreamSource, error) {
 	var err error
-	if err = ensureConsumeGroup(client.Client, consumerGroup, streamName); err != nil {
+	if err = client.EnsureConsumeGroupCreated(ctx, streamName, consumerGroup); err != nil {
 		return nil, err
 	}
 
@@ -44,89 +40,14 @@ func NewRedisStreamSource(ctx context.Context, client *common.Redis, streamName 
 		streamName:    streamName,
 		consumerGroup: consumerGroup,
 	}
-
-	go source.init(ctx)
+	go func() {
+		err = client.Consume(ctx, streamName, consumerGroup, source.out)
+		if err != nil {
+			zap.L().Warn("source stream stopped", zap.String("stream", streamName),
+				zap.String("consumeGroup", consumerGroup), zap.Error(err))
+		}
+	}()
 	return source, nil
-}
-
-func ensureConsumeGroup(client *redis.Client, consumerGroup, stream string) error {
-	var groups []redis.XInfoGroup
-	var err error
-
-	//当无法获取到group信息时，创建一个消费group
-	if groups, err = client.XInfoGroups(context.Background(), stream).Result(); err != nil || len(groups) == 0 {
-		var groupExists bool
-		for _, g := range groups {
-			if g.Name == consumerGroup {
-				return nil
-			}
-		}
-
-		if !groupExists {
-			//You can use the XGROUP CREATE command with MKSTREAM option, to create an empty stream
-			//XGroupCreate 方法要求先有stream的存在才能创建group
-			return client.XGroupCreateMkStream(context.Background(), stream, consumerGroup, "0").Err()
-		}
-	}
-
-	return nil
-}
-
-// init starts the main loop
-func (rs *RedisStreamSource) init(ctx context.Context) {
-	defer func() {
-		close(rs.out)
-		if err := rs.redisClient.Client.Close(); err != nil {
-			zap.L().Error("failed to close redis connection", zap.Error(err))
-		}
-		if err := recover(); err != nil {
-			zap.S().Errorf("an unexpected error occurs during fetching data form stream, %v", err)
-		}
-	}()
-
-loop:
-	for {
-
-		select {
-		case <-ctx.Done():
-			zap.S().Info("cancelled fetching")
-			break loop
-		default:
-			rs.fetchFromStream()
-		}
-
-	}
-
-}
-
-func (rs *RedisStreamSource) fetchFromStream() {
-	defer func() {
-		if err := recover(); err != nil {
-			zap.S().Errorf("an unexpected error occurs, %v", err)
-		}
-	}()
-
-	consumer := rs.streamName + ":consumer:" + strconv.Itoa(rand.Int())
-	entries, err := rs.redisClient.Client.XReadGroup(context.Background(), &redis.XReadGroupArgs{
-		Group:    rs.consumerGroup,
-		Consumer: consumer,
-
-		Streams: []string{rs.streamName, ">"},
-		Count:   1,
-		Block:   0,
-	}).Result()
-	if err != nil {
-		zap.S().Errorf("failed to handle XReadGroup, %v", err)
-		return
-	}
-	for i := 0; i < len(entries[0].Messages); i++ {
-		messageID := entries[0].Messages[i].ID
-		jsonData := entries[0].Messages[i].Values[common.RedisStreamDataVar]
-		rs.out <- jsonData
-		zap.L().Info("send a message into channel")
-		rs.redisClient.Client.XAck(context.Background(), rs.streamName, rs.consumerGroup, messageID)
-		zap.S().Info("fetch a message from stream")
-	}
 }
 
 // Via streams data through the given flow
@@ -177,7 +98,6 @@ func (rs *RedisStreamSink) init(ctx context.Context) {
 		}
 
 	}
-
 }
 
 // In returns an input channel for receiving data

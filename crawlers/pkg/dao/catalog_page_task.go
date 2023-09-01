@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"time"
 )
 
 type catalogPageTaskInterface interface {
@@ -58,6 +59,8 @@ func (c *catalogPageTaskDaoImpl) Save(ctx context.Context, task *model.CatalogPa
 		}
 	} else {
 		//update
+		curTime := time.Now()
+		task.LastUpdated = &curTime
 		taskBytes, err := bson.Marshal(task)
 		if err != nil {
 			return nil, err

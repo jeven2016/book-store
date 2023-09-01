@@ -1,7 +1,6 @@
 package common
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/duke-git/lancet/v2/slice"
@@ -39,15 +38,6 @@ func GenExpireTime() time.Duration {
 	return time.Duration(rand.Intn(max-min)+min) * time.Minute
 }
 
-func CheckCancel(ctx context.Context) bool {
-	select {
-	case <-ctx.Done():
-		return true
-	default:
-		return false
-	}
-}
-
 func ParseBaseUri(url string) string {
 	reg, err := regexp.Compile("(https?://[^/]*)")
 	if err != nil {
@@ -66,13 +56,13 @@ func BuildUrl(baseUri string, path string) string {
 	return strings.TrimSuffix(ParseBaseUri(baseUri), "/") + "/" + strings.TrimPrefix(path, "/")
 }
 
-func GetSiteConfig(siteKey string) (*SiteConfig, error) {
+func GetSiteConfig(siteKey string) *SiteConfig {
 	sys := GetSystem()
 	cfg, ok := slice.FindBy(sys.Config.GetServerConfig().WebSites, func(index int, item SiteConfig) bool {
 		return item.Name == siteKey
 	})
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("No such site configured: %s", siteKey))
+		return nil
 	}
-	return &cfg, nil
+	return &cfg
 }

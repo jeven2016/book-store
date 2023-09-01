@@ -53,11 +53,19 @@ type MongoCollections struct {
 	CatalogPage string `koanf:"catalogPage"`
 }
 
+type CrawlerSetting struct {
+	Catalog     map[string]any `koanf:"catalog"`
+	CatalogPage map[string]any `koanf:"catalogPage"`
+	Novel       map[string]any `koanf:"novel"`
+	Chapter     map[string]any `koanf:"chapter"`
+}
+
 type SiteConfig struct {
 	Name             string            `koan:"name"`
 	RegexSettings    *RegexSettings    `koanf:"regexSettings"`
 	MongoCollections *MongoCollections `koanf:"mongoCollections"`
 	Attributes       map[string]string `koanf:"attributes"`
+	CrawlerSettings  *CrawlerSetting   `koanf:"crawlerSettings"`
 }
 
 type RedisConfig struct {

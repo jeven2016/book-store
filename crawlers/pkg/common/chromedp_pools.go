@@ -19,7 +19,7 @@ func NewChromePool() *ChromePool {
 			New: func() any {
 				// 创建一个自定义的Chrome选项
 				opts := append(chromedp.DefaultExecAllocatorOptions[:],
-					chromedp.Flag("headless", false), // 取消headless模式
+					chromedp.Flag("headless", true), // 取消headless模式
 				)
 
 				// 创建一个自定义的Chrome执行器
@@ -57,7 +57,7 @@ func (c *ChromePool) PutInstance(instance context.Context) {
 func OpenChrome(cnt context.Context) (ctx context.Context, cleanFunc func()) {
 	// 创建一个自定义的Chrome选项
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false), // 取消headless模式
+		chromedp.Flag("headless", true), // 取消headless模式
 	)
 
 	// 创建一个自定义的Chrome执行器

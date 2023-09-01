@@ -36,7 +36,7 @@ logConfig:
 
 
 webSites:
-  - name: onej
+  - name: onej #最高支持catalogPage， catalog为人员名称
     regexSettings:
       #拼装每一页url
       parsePageRegex: page=([^\&]+)
@@ -51,6 +51,7 @@ webSites:
     crawlerSettings:
       novel:
         skipIfPresent: false
-        skipSaveIfPresent: true
+        skipSaveIfPresent: false
       chapter:
-        skipIfPresent: true
+        skipIfPresent: false
+        skipSaveIfPresent: false

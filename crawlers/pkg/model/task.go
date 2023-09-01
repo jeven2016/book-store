@@ -139,6 +139,7 @@ func (s *NovelPageTask) GetStatus() common.TaskStatus {
 type ChapterTask struct {
 	Id       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name     string             `bson:"name" json:"name"`
+	Order    int                `bson:"order" json:"order"`
 	NovelId  primitive.ObjectID `bson:"novelId,omitempty" json:"novelId"`
 	Url      string             `bson:"url" json:"url"`
 	Status   common.TaskStatus  `bson:"status" json:"status"`

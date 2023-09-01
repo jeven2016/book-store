@@ -25,6 +25,7 @@ const (
 	ColumnSiteName  = "siteName"
 	ColumnNovelId   = "novelId"
 	ColumnParentId  = "parentId"
+	ColumnPageNo    = "page"
 
 	AttrAuthor = "author"
 )

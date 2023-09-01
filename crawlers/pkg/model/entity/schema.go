@@ -44,12 +44,11 @@ type Novel struct {
 }
 
 type Chapter struct {
-	Id          primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
-	NovelId     primitive.ObjectID     `bson:"novelId,omitempty" json:"novelId" binding:"required"`
-	Name        string                 `bson:"name" json:"name" binding:"required"`
-	Order       int                    `bson:"order" json:"order"`
-	Description string                 `bson:"description" json:"description"`
-	Attributes  map[string]interface{} `bson:"attributes" json:"attributes"`
+	Id         primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
+	NovelId    primitive.ObjectID     `bson:"novelId,omitempty" json:"novelId" binding:"required"`
+	Name       string                 `bson:"name" json:"name" binding:"required"`
+	Order      int                    `bson:"order" json:"order"`
+	Attributes map[string]interface{} `bson:"attributes" json:"attributes"`
 
 	CreatedTime *time.Time `bson:"created" bson:"createdTime"`
 	UpdatedTime *time.Time `bson:"updated" bson:"updatedTime"`
@@ -59,7 +58,7 @@ type Content struct {
 	Id         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	ParentId   primitive.ObjectID `bson:"parentId,omitempty" json:"parentId"`
 	ParentType string             `bson:"parentType,omitempty" json:"parentType"` //chapter or novel
-	Page       uint32             `bson:"page,omitempty" json:"page"`
+	Page       int                `bson:"page,omitempty" json:"page"`
 	Content    string             `bson:"content" json:"content"`
 
 	CreatedTime *time.Time `bson:"created" bson:"createdTime"`

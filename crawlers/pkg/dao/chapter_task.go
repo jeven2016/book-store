@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"time"
 )
 
 type chapterTaskInterface interface {
@@ -39,6 +40,8 @@ func (c *chapterTaskDaoImpl) Save(ctx context.Context, task *model.ChapterTask) 
 		}
 	} else {
 		//update
+		curTime := time.Now()
+		task.LastUpdated = &curTime
 		taskBytes, err := bson.Marshal(task)
 		if err != nil {
 			return nil, err

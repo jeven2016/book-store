@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/duke-git/lancet/v2/convertor"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-	"math/rand"
+	"go.uber.org/zap"
 	"reflect"
-	"strconv"
 	"time"
 )
 
@@ -28,52 +28,34 @@ func NewRedis(redisCfg *RedisConfig) (*Redis, error) {
 		PoolSize:     redisCfg.PoolSize,
 		PoolTimeout:  time.Duration(redisCfg.PoolTimeout) * time.Second,
 	})
-	if _, err := client.Ping(context.Background()).Result(); err != nil {
+	ctx := context.Background()
+	if _, err := client.Ping(ctx).Result(); err != nil {
 		return nil, err
 	}
 	rd := &Redis{
 		Client: client,
 		config: redisCfg,
 	}
-
-	if err := rd.ensureConsumerGroups(); err != nil {
-		return nil, err
-	}
 	return rd, nil
 }
 
-func (rd *Redis) ensureConsumerGroups() error {
-	if !rd.config.AutoCreateConsumerGroups {
+func (rd *Redis) EnsureConsumeGroupCreated(ctx context.Context, streamName string, group string) error {
+	if groups, err := rd.Client.XInfoGroups(context.Background(), streamName).Result(); err == nil {
 		return nil
-	}
-
-	for streamName, groups := range GetStreamGroupMap() {
-		if streamName == "" {
-			return nil
-		}
-		for _, group := range groups {
-			if group == "" {
-				continue
-			}
-
-			//当无法获取到group信息时，创建一个消费group
-			if groups, err := rd.Client.XInfoGroups(context.Background(), streamName).Result(); err != nil {
-				for _, g := range groups {
-					if g.Name == group {
-						return nil
-					}
-				}
-
-				//You can use the XGROUP CREATE command with MKSTREAM option, to create an empty stream
-				//XGroupCreate 方法要求先有stream的存在才能创建group
-				if err = rd.Client.XGroupCreateMkStream(context.Background(), streamName, group, "0").Err(); err != nil {
-					return err
-				}
-
+	} else {
+		//当无法获取到group信息时，创建一个消费group
+		for _, g := range groups {
+			if g.Name == group {
+				return nil
 			}
 		}
-	}
 
+		//You can use the XGROUP CREATE command with MKSTREAM option, to create an empty stream
+		//XGroupCreate 方法要求先有stream的存在才能创建group
+		if err = rd.Client.XGroupCreateMkStream(ctx, streamName, group, "0").Err(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -99,10 +81,10 @@ func (rd *Redis) PublishMessage(ctx context.Context, data interface{}, streamNam
 	//different kind of exceptions that need to handle
 	err = rd.Client.XAdd(ctx, &redis.XAddArgs{
 		Stream:     streamName,
-		NoMkStream: false,  // * 默认false,当为false时,key不存在，会新建
-		MaxLen:     100000, // * 指定stream的最大长度,当队列长度超过上限后，旧消息会被删除，只保留固定长度的新消息
-		Approx:     false,  // * 默认false,当为true时,模糊指定stream的长度
-		ID:         "*",    // 消息 id，我们使用 * 表示由 redis 生成
+		NoMkStream: false, // * 默认false,当为false时,key不存在，会新建
+		MaxLen:     10000, // * 指定stream的最大长度,当队列长度超过上限后，旧消息会被删除，只保留固定长度的新消息
+		Approx:     false, // * 默认false,当为true时,模糊指定stream的长度
+		ID:         "*",   // 消息 id，我们使用 * 表示由 redis 生成
 		// MinID: "id",            // * 超过阈值，丢弃设置的小于MinID消息id【基本不用】
 		// Limit: 1000,            // * 限制长度【基本不用】
 		Values: map[string]string{
@@ -113,35 +95,56 @@ func (rd *Redis) PublishMessage(ctx context.Context, data interface{}, streamNam
 }
 
 func (rd *Redis) Consume(ctx context.Context, streamName string,
-	consumerGroup string, msgChan chan<- string, delErrChan chan<- error) error {
+	consumerGroup string, msgChan chan<- interface{}) error {
+	defer func() {
+		zap.S().Info("closing redis stream")
+		close(msgChan)
+		if err := recover(); err != nil {
+			zap.S().Errorf("an unexpected error occurs during fetching data form stream, %v", err)
+		}
+	}()
+
+	prefix := uuid.New().String()[:8]
+	consumerId := streamName + ":consumer:" + prefix
+loop:
 	for {
-		if CheckCancel(ctx) {
-			return nil
-		}
-		consumer := streamName + "-consumer-" + strconv.Itoa(int(rand.Uint32()))
-		entries, err := rd.Client.XReadGroup(ctx, &redis.XReadGroupArgs{
-			Group:    consumerGroup,
-			Consumer: consumer,
 
-			Streams: []string{streamName, ">"},
-			Count:   2,
-			Block:   0,
-		}).Result()
-		if err != nil {
-			return err
-		}
+		select {
+		case <-ctx.Done():
+			zap.S().Info("fetching cancelled ")
+			break loop
+		default:
+			entries, err := rd.Client.XReadGroup(ctx, &redis.XReadGroupArgs{
+				Group:    consumerGroup,
+				Consumer: consumerId,
 
-		for i := 0; i < len(entries[0].Messages); i++ {
-			messageID := entries[0].Messages[i].ID
-			jsonData := entries[0].Messages[i].Values[RedisStreamDataVar].(string)
-			msgChan <- jsonData
-			//必须得ACK，解决redis内存占用高的问题
-			rd.Client.XAck(ctx, streamName, consumerGroup, messageID)
-			if err = rd.Client.XDel(ctx, streamName, messageID).Err(); err != nil {
-				delErrChan <- err
+				Streams: []string{streamName, ">"},
+				Count:   1,
+				Block:   0,
+			}).Result()
+			if err != nil {
+				zap.S().Errorf("failed to handle XReadGroup, %v", err)
+				return err
+			}
+			for i := 0; i < len(entries[0].Messages); i++ {
+				messageID := entries[0].Messages[i].ID
+				jsonData := entries[0].Messages[i].Values[RedisStreamDataVar]
+				msgChan <- jsonData
+				zap.L().Info("retrieve a message into channel")
+				rd.Client.XAck(context.Background(), streamName, consumerGroup, messageID)
 			}
 		}
 	}
+	return nil
+}
+
+func (rd *Redis) fetchFromStream(ctx context.Context, streamName, consumerId, consumerGroup string) {
+	defer func() {
+		if err := recover(); err != nil {
+			zap.S().Errorf("an unexpected error occurs, %v", err)
+		}
+	}()
+
 }
 
 // Len returns the current stream length

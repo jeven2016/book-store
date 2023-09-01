@@ -9,10 +9,10 @@ import (
 )
 
 type SiteCrawler interface {
-	HandleHomePage(ctx context.Context, url string) error
-	HandleCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error)
-	HandleNovelPage(ctx context.Context, novelPageMsg *model.NovelTask) ([]model.ChapterTask, error)
-	HandleChapterPage(ctx context.Context, chapterMsg *model.ChapterTask) error
+	CrawlHomePage(ctx context.Context, url string) error
+	CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error)
+	CrawlNovelPage(ctx context.Context, novelPageMsg *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error)
+	CrawlChapterPage(ctx context.Context, chapterMsg *model.ChapterTask, skipSaveIfPresent bool) error
 }
 
 var siteCrawlerMap = make(map[string]SiteCrawler)

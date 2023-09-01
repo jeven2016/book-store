@@ -23,11 +23,10 @@ type SiteOnej struct {
 
 func NewSiteOnej() *SiteOnej {
 	sys := common.GetSystem()
-	cfg, err := common.GetSiteConfig(common.SiteOneJ)
-	if err != nil {
-		sys.Log.Sugar().Error("Could not find site config", zap.Error(err))
+	cfg := common.GetSiteConfig(common.SiteOneJ)
+	if cfg == nil {
+		sys.Log.Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
 	}
-
 	return &SiteOnej{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
@@ -44,7 +43,7 @@ const attachmentUriKey = "attachmentUri"
 const directory = "directory"
 
 // HandleCatalogPage 解析每一页
-func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
+func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
 	collyCtx := colly.NewContext()
 
 	url := catalogPageMsg.Url
@@ -104,7 +103,7 @@ func (s *SiteOnej) HandleCatalogPage(ctx context.Context, catalogPageMsg *model.
 }
 
 // HandleNovelPage 解析具体的Novel
-func (s *SiteOnej) HandleNovelPage(ctx context.Context, novelPageMsg *model.NovelTask) ([]model.ChapterTask, error) {
+func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error) {
 	s.logger.Info("Got novel message", zap.String("name", novelPageMsg.Name))
 
 	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
@@ -170,10 +169,10 @@ func (s *SiteOnej) HandleNovelPage(ctx context.Context, novelPageMsg *model.Nove
 	return []model.ChapterTask{}, nil
 }
 
-func (s *SiteOnej) HandleHomePage(ctx context.Context, url string) error {
+func (s *SiteOnej) CrawlHomePage(ctx context.Context, url string) error {
 	//TODO implement me
 	panic("implement me")
 }
-func (s *SiteOnej) HandleChapterPage(ctx context.Context, chapterMsg *model.ChapterTask) error {
+func (s *SiteOnej) CrawlChapterPage(ctx context.Context, chapterMsg *model.ChapterTask, skipSaveIfPresent bool) error {
 	panic("implement me")
 }

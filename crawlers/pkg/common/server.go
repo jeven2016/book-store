@@ -126,6 +126,6 @@ func shutdown(ctx context.Context, sys *System, params *StartupParams) {
 	if sys.TaskPool != nil {
 		sys.TaskPool.Release()
 	}
-	sys.Log.Info("shutdown completed")
-	os.Exit(0)
+	sys.Log.Info("shutdown operation will complete in few seconds")
+	//os.Exit(0)
 }

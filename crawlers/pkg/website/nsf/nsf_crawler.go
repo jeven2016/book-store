@@ -11,6 +11,7 @@ import (
 	"github.com/go-creed/sat"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"strings"
 	"time"
@@ -27,9 +28,9 @@ type NsfCrawler struct {
 
 func NewNsfCrawler() *NsfCrawler {
 	sys := common.GetSystem()
-	cfg, err := common.GetSiteConfig(common.SiteNsf)
-	if err != nil {
-		sys.Log.Sugar().Error("Could not find site config", zap.Error(err))
+	cfg := common.GetSiteConfig(common.SiteNsf)
+	if cfg == nil {
+		sys.Log.Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
 	}
 
 	return &NsfCrawler{
@@ -49,12 +50,12 @@ var removeTexts = []string{
 }
 
 // HandleCatalogPage 解析每一页
-func (n *NsfCrawler) HandleCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
+func (n *NsfCrawler) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
 	panic("Not implemented")
 }
 
 // HandleNovelPage 解析具体的Novel
-func (n *NsfCrawler) HandleNovelPage(ctx context.Context, novelTask *model.NovelTask) ([]model.ChapterTask, error) {
+func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error) {
 	zap.L().Info("Got novel message", zap.String("url", novelTask.Url))
 	var createdTime = time.Now()
 	var novel = entity.Novel{Attributes: make(map[string]interface{}), CreatedTime: &createdTime}
@@ -99,7 +100,6 @@ func (n *NsfCrawler) HandleNovelPage(ctx context.Context, novelTask *model.Novel
 		chp := &entity.Chapter{
 			Name:        chapterName,
 			Order:       index,
-			Description: "",
 			CreatedTime: &createdTime,
 			UpdatedTime: nil,
 		}
@@ -128,53 +128,103 @@ func (n *NsfCrawler) HandleNovelPage(ctx context.Context, novelTask *model.Novel
 	if err := n.colly.Visit(novelTask.Url); err != nil {
 		return nil, err
 	}
-	//保存novel
-	novel.HasChapters = index > 0
-	novelId, err := dao.NovelDao.Insert(ctx, &novel)
-	if err != nil {
+
+	var novelId *primitive.ObjectID
+	var err error
+
+	if novelId, err = dao.NovelDao.FindIdByName(ctx, novelTask.Name); err != nil {
 		return nil, err
 	}
-	if index > 0 {
-		if err = dao.ChapterDao.BulkInsert(ctx, chapters, novelId); err != nil {
+
+	if !skipSaveIfPresent || novelId == nil {
+		//保存novel
+		novel.HasChapters = index > 0
+		if novelId, err = dao.NovelDao.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
 
-	slice.ForEach(chpTasks, func(index int, item model.ChapterTask) {
-		item.NovelId = *novelId
-	})
+	if novelId != nil {
+		slice.ForEach(chpTasks, func(index int, item model.ChapterTask) {
+			item.NovelId = *novelId
+			item.Order = index
+		})
+	}
 	return chpTasks, nil
 }
 
-func (n *NsfCrawler) HandleHomePage(ctx context.Context, url string) error {
+func (n *NsfCrawler) CrawlHomePage(ctx context.Context, url string) error {
 	//TODO implement me
 	panic("implement me")
 }
-func (n *NsfCrawler) HandleChapterPage(ctx context.Context, chapterMsg *model.ChapterTask) (err error) {
-	zap.L().Info("Got chapter message", zap.String("url", chapterMsg.Url))
+func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) (err error) {
+	zap.L().Info("Got chapter message", zap.String("url", chapterTask.Url))
 	var createdTime = time.Now()
-	var content = &entity.Content{
-		ParentType:  common.ParentTypeChapter,
-		ParentId:    chapterMsg.Id,
-		CreatedTime: &createdTime,
-	}
+
 	chromeCtx, cleanFunc := common.OpenChrome(context.Background())
 	defer cleanFunc()
 
-	var text string
+	var text string //content of the chapter
 	err = chromedp.Run(chromeCtx,
-		chromedp.Navigate(chapterMsg.Url),
+		chromedp.Navigate(chapterTask.Url),
 		//chromedp.WaitNotPresent("//p[contains(text(),'内容未加载完成')]", chromedp.BySearch),
 		chromedp.InnerHTML("//div[@class='RBGsectionThree-content']", &text, chromedp.BySearch),
 	)
 	if err != nil {
 		return
 	}
+
+	var chapterId *primitive.ObjectID
+
+	// for chapter
+	existingChapter, err := dao.ChapterDao.FindByName(ctx, chapterTask.Name)
+	if err != nil {
+		return
+	}
+	if existingChapter != nil {
+		chapterId = &existingChapter.Id
+		existingChapter.NovelId = chapterTask.NovelId
+		existingChapter.Order = chapterTask.Order
+	} else {
+		//create one
+		existingChapter = &entity.Chapter{
+			NovelId:     chapterTask.NovelId,
+			Name:        chapterTask.Name,
+			Order:       chapterTask.Order,
+			CreatedTime: &createdTime,
+		}
+	}
+
+	//todo
+	if !skipSaveIfPresent || chapterId == nil || (*chapterId).IsZero() {
+		if chapterId, err = dao.ChapterDao.Save(ctx, existingChapter); err != nil {
+			return
+		}
+	}
+
+	//for content
+	//page for chapters, need an enhancement
+	existingContent, err := dao.ContentDao.FindByParentIdAndPage(ctx, chapterId, 0)
+	if err != nil {
+		return
+	}
+
 	for _, txt := range removeTexts {
 		text = strings.ReplaceAll(text, txt, "")
 	}
 
-	content.Content = text
-	_, err = dao.ContentDao.Insert(ctx, content)
+	if existingContent != nil {
+		existingContent.Content = text
+	} else {
+		//create one
+		existingContent = &entity.Content{
+			ParentId:    *chapterId,
+			ParentType:  common.ParentTypeChapter,
+			Content:     text,
+			CreatedTime: &createdTime,
+		}
+	}
+
+	_, err = dao.ContentDao.Save(ctx, content)
 	return
 }

@@ -3,24 +3,36 @@ package dao
 import (
 	"context"
 	"crawlers/pkg/common"
-	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"time"
 )
 
 type chapterInterface interface {
+	FindByName(ctx context.Context, name string) (*entity.Chapter, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error)
 	BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error
+	Save(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error)
 }
 
 type chapterDaoImpl struct{}
 
+func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.Chapter, error) {
+	chapter, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &entity.Chapter{},
+		&options.FindOneOptions{})
+	if err != nil || chapter == nil {
+		return nil, err
+	}
+	return chapter, err
+}
+
 func (n *chapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &model.CatalogPageTask{},
+	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
 	return task != nil, err
 }
@@ -45,6 +57,33 @@ func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*pr
 	} else {
 		insertedId := result.InsertedID.(primitive.ObjectID)
 		return &insertedId, nil
+	}
+}
+
+func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*primitive.ObjectID, error) {
+	if chapter.Id.IsZero() {
+		//insert
+		return n.Insert(ctx, chapter)
+	} else {
+		collection := common.GetSystem().GetCollection(common.CollectionChapter)
+		if collection == nil {
+			zap.L().Error("collection not found: " + common.CollectionChapter)
+			return nil, errors.New("collection not found: " + common.CollectionChapter)
+		}
+		//update
+		curTime := time.Now()
+		chapter.UpdatedTime = &curTime
+
+		taskBytes, err := bson.Marshal(chapter)
+		if err != nil {
+			return nil, err
+		}
+		var doc bson.D
+		if err = bson.Unmarshal(taskBytes, &doc); err != nil {
+			return nil, err
+		}
+		_, err = collection.UpdateOne(ctx, bson.M{common.ColumId: chapter.Id}, bson.M{"$set": doc})
+		return &chapter.Id, err
 	}
 }
 
