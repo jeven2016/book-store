@@ -3,6 +3,7 @@ package api
 import (
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"time"
 )
@@ -23,10 +24,12 @@ func RegisterEndpoints() *gin.Engine {
 	engine.Use(ginzap.RecoveryWithZap(logger, false))
 
 	hd := NewHandler()
+	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	engine.POST("/catalogs", hd.CreateCatalog)
 	engine.POST("/sites", hd.CreateSite)
 	engine.POST("/tasks/catalog-pages", hd.HandleCatalogPage)
 	engine.POST("/tasks/novels", hd.HandleNovelPage)
+	engine.POST("/tasks/schedule-task", hd.RunScheduleTask)
 
 	return engine
 }

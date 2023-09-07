@@ -46,6 +46,7 @@ type TaskPoolSetting struct {
 type RegexSettings struct {
 	ParsePageRegex string `koanf:"parsePageRegex"`
 	PagePrefix     string `koanf:"pagePrefix"`
+	PageSuffix     string `koanf:"pageSuffix"`
 }
 
 type MongoCollections struct {

@@ -11,7 +11,7 @@ var regexMap = map[string]*regexp.Regexp{}
 var invalidPageParameterErr = errors.New("invalid page parameter")
 
 // GenPageUrls 解析page=1, page=1,2-8两类分页参数，并返回拼装好的URL
-func GenPageUrls(pageRegex, url, pagePrefix string) ([]string, error) {
+func GenPageUrls(pageRegex, url, pagePrefix, pageSuffix string) ([]string, error) {
 	var err error
 	var regex = regexMap[pageRegex]
 
@@ -19,6 +19,7 @@ func GenPageUrls(pageRegex, url, pagePrefix string) ([]string, error) {
 		if regex, err = regexp.Compile(pageRegex); err != nil {
 			return nil, nil
 		}
+		regexMap[pageRegex] = regex
 	}
 
 	submatch := regex.FindStringSubmatch(url)
@@ -62,8 +63,7 @@ func GenPageUrls(pageRegex, url, pagePrefix string) ([]string, error) {
 
 		var pageUrls []string
 		for _, pageNo := range pageNoArray {
-			pageUrl := regex.ReplaceAllString(url, pagePrefix+strconv.Itoa(int(pageNo)))
-			println(pageUrl)
+			pageUrl := regex.ReplaceAllString(url, pagePrefix+strconv.Itoa(int(pageNo))+pageSuffix)
 			pageUrls = append(pageUrls, pageUrl)
 		}
 		return pageUrls, nil

@@ -5,10 +5,11 @@ import (
 )
 
 var urlRegex = "(?:page=)([^\\&]+)"
+var nsfRegex = "([^/]+)\\.html"
 
 func TestComplexUrlRegex(t *testing.T) {
 	var url = "https://www.baidu.com?page=1,2-8&format=json"
-	urls, err := GenPageUrls(urlRegex, url, "page=")
+	urls, err := GenPageUrls(urlRegex, url, "page=", "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -19,7 +20,7 @@ func TestComplexUrlRegex(t *testing.T) {
 
 func TestSimpleUrlRegex(t *testing.T) {
 	var url = "https://www.baidu.com?page=1&format=json"
-	urls, err := GenPageUrls(urlRegex, url, "page=")
+	urls, err := GenPageUrls(urlRegex, url, "page=", "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -30,7 +31,7 @@ func TestSimpleUrlRegex(t *testing.T) {
 
 func TestInvalidUrlRegex(t *testing.T) {
 	var url = "https://www.baidu.com?page=1,,8,4&format=json"
-	urls, err := GenPageUrls(urlRegex, url, "page=")
+	urls, err := GenPageUrls(urlRegex, url, "page=", "")
 	if err == nil {
 		t.Error(err)
 	}
@@ -41,11 +42,22 @@ func TestInvalidUrlRegex(t *testing.T) {
 
 func TestIndividualPageNumber(t *testing.T) {
 	var url = "https://www.baidu.com?page=1,2,3,4&format=json"
-	urls, err := GenPageUrls(urlRegex, url, "page=")
+	urls, err := GenPageUrls(urlRegex, url, "page=", "")
 	if err != nil {
 		t.Error(err)
 	}
 	if len(urls) != 4 {
+		t.Error("urls length error")
+	}
+}
+
+func TestNsfPage(t *testing.T) {
+	var url = "https://abc.com/category/18/3-5.html"
+	urls, err := GenPageUrls(nsfRegex, url, "", ".html")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(urls) != 3 {
 		t.Error("urls length error")
 	}
 }

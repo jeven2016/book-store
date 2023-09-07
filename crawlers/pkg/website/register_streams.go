@@ -14,7 +14,6 @@ const consumersNumber = 5
 
 func RegisterStream(ctx context.Context) error {
 	pr := NewTaskProcessor()
-	// Register for page
 
 	//consume catalog page ColumnUrl
 	if err := catalogPageStream(ctx, pr); err != nil {
@@ -28,15 +27,6 @@ func RegisterStream(ctx context.Context) error {
 	if err := chapterStream(ctx, pr); err != nil {
 		return err
 	}
-
-	//schd := gocron.NewScheduler(time.Local)
-	//_, err := schd.Every(10).Minute().Do(func() {
-	//	zap.S().Info("Scheduler runs")
-	//})
-	//if err != nil {
-	//	return err
-	//}
-	//schd.StartAsync()
 	return nil
 }
 

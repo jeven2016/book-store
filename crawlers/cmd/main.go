@@ -58,6 +58,7 @@ func run() {
 					sys.Log.Error("failed to register streams", zap.Error(err))
 					return
 				}
+
 				engine := api.RegisterEndpoints()
 
 				// run as a web server

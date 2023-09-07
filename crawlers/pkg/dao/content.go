@@ -27,11 +27,11 @@ func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 		return nil, common.ErrDocumentIdExists
 	}
 	//check if name conflicts
-	content, err := c.FindByParentIdAndPage(ctx, &content.ParentId, content.Page)
+	existingContent, err := c.FindByParentIdAndPage(ctx, &content.ParentId, content.Page)
 	if err != nil {
 		return nil, err
 	}
-	if content != nil {
+	if existingContent != nil {
 		return nil, common.ErrDuplicatedDocument
 	}
 	//insert
@@ -44,7 +44,7 @@ func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 }
 
 func (c *contentDaoImpl) FindByParentIdAndPage(ctx context.Context, parentId *primitive.ObjectID, pageNo int) (*entity.Content, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnParentId: parentId, common.ColumnPageNo: pageNo},
+	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnParentId: parentId}, //TODO: common.ColumnPageNo: pageNo
 		common.CollectionContent, &entity.Content{},
 		&options.FindOneOptions{})
 	return task, err

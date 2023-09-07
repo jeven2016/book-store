@@ -29,9 +29,9 @@ logConfig:
   logPath: ./ # 日志存放路径：${logPath}/${fileName}
   outputToConsole: true  # 是否同时将日志打印到控制台
   fileName: crawlers.log
-  maxSizeInMB: 100   # 日志文件的体积
-  maxAgeInDays: 30   # 最多保留天数
-  maxBackups: 10    # 允许存在几个日志备份文件
+  maxSizeInMB: 5   # 日志文件的体积
+  maxAgeInDays: 5   # 最多保留天数
+  maxBackups: 2    # 允许存在几个日志备份文件
   compress: true    # 是否压缩保存历史文件
 
 
@@ -47,11 +47,24 @@ webSites:
     attributes:
       directory: /home/cloud/Desktop/onej/
       consumers: 3
+
   - name: nsf
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: ([^/]+)\.html
+      pagePrefix: ""
+      pageSuffix: ".html"
     crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
       novel:
         skipIfPresent: false
-        skipSaveIfPresent: false
+        skipSaveIfPresent: true
       chapter:
-        skipIfPresent: false
-        skipSaveIfPresent: false
+        enabled: true
+        skipIfPresent: true
+        skipSaveIfPresent: true

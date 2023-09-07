@@ -21,13 +21,12 @@ type OperationDate struct {
 
 // SiteTask 站点
 type SiteTask struct {
-	Id          primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
-	Name        string                 `bson:"name" json:"name" binding:"required"`
-	Description string                 `bson:"description" json:"description"`
-	Url         string                 `bson:"url" json:"url" binding:"required"`
-	Attributes  map[string]interface{} `bson:"attributes" json:"attributes"`
-	Status      common.TaskStatus      `bson:"status" json:"status"`
-	Retries     uint32                 `bson:"retries" json:"retries"`
+	Id         primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
+	Name       string                 `bson:"name" json:"name" binding:"required"`
+	Url        string                 `bson:"url" json:"url" binding:"required"`
+	Attributes map[string]interface{} `bson:"attributes" json:"attributes"`
+	Status     common.TaskStatus      `bson:"status" json:"status"`
+	Retries    uint32                 `bson:"retries" json:"retries"`
 
 	OperationDate
 }
@@ -51,7 +50,6 @@ type CatalogTask struct {
 	ParentCatalogId primitive.ObjectID     `bson:"parentCatalogId,omitempty" json:"parentCatalogId"`
 	Name            string                 `bson:"name" json:"name" binding:"required"`
 	Url             string                 `bson:"url" json:"url" binding:"required"`
-	Description     string                 `bson:"description" json:"description"`
 	Attributes      map[string]interface{} `bson:"attributes" json:"attributes"`
 	Status          common.TaskStatus      `bson:"status" json:"status"`
 	Retries         uint32                 `bson:"retries" json:"retries"`

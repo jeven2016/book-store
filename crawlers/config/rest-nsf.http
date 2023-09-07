@@ -4,7 +4,7 @@ content-type: application/json
 
 {
   "name": "nsf",
-  "displayName": "nsf图书",
+  "displayName": "nsf图书馆",
   "crawlerType": 3,
   "attributes": {
     "siteUrl": "https://www.nosadfun.com"
@@ -19,7 +19,8 @@ content-type: application/json
 {
   "siteId": "64ea11b58b1f9d5c2e308b8a",
   "name": "武侠",
-  "url": "https://www.nosadfun.com/category/8/"
+  "url": "https://www.nosadfun.com/category/8/",
+  "crawlerType": 3
 }
 
 
@@ -28,8 +29,8 @@ POST http://localhost:8080/tasks/catalog-pages
 Content-Type: application/json
 
 {
-  "catalogId": "64ea12bb8b1f9d5c2e308b8b",
-  "url": "https://onejav.com/actress/Fuua%20Kaede?page=89"
+  "catalogId": "64f308e4eddbeeaa4bb06c01",
+  "url": "https://www.nosadfun.com/category/2/1-5.html"
 }
 
 
@@ -39,5 +40,5 @@ Content-Type: application/json
 
 {
   "catalogId": "64ea12bb8b1f9d5c2e308b8b",
-  "url": "https://www.nosadfun.com/book/37994/"
+  "url": "https://www.nosadfun.com/book/229662/catalog/"
 }

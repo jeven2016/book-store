@@ -113,7 +113,6 @@ func (h *Handler) HandleNovelPage(c *gin.Context) {
 	if site, hasError = h.getTaskEntity(c, novelTask.CatalogId); hasError {
 		return
 	}
-	novelTask.Name = site.Name
 	novelTask.Status = common.TaskStatusNotStared
 	novelTask.SiteName = site.Name
 
@@ -211,4 +210,8 @@ func (h *Handler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 	} else {
 		c.JSON(http.StatusCreated, obj)
 	}
+}
+
+func (h *Handler) RunScheduleTask(c *gin.Context) {
+
 }

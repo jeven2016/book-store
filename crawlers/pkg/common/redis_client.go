@@ -111,7 +111,7 @@ loop:
 
 		select {
 		case <-ctx.Done():
-			zap.S().Info("fetching cancelled ")
+			zap.S().Info("stop fetching while context canceled ")
 			break loop
 		default:
 			entries, err := rd.Client.XReadGroup(ctx, &redis.XReadGroupArgs{
