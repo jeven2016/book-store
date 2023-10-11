@@ -1,3 +1,14 @@
+env:
+  mongodb_user: ${MONGODB_USER:db_user}
+  mongodb_pwd: ${MONGODB_PWD:db_pwd}
+  mongodb_host: ${MONGODB_HOST:192.168.1.11}
+  mongodb_port: ${MONGODB_PORT:db_pwd:30003}
+  mongodb_uri: "mongodb://${env.mongodb_user}:${env.mongodb_pwd}@${env.mongodb_host:192.168.1.11}:${env.mongodb_port}/books?connectTimeoutMS=20000&minPoolSize=0&maxPoolSize=10&maxIdleTimeMS=900000&authSource=admin"
+  redis_host: "${REDIS_HOST:192.168.1.11}"
+  redis_port: "${REDIS_PORT:30025}"
+  redis_password: "${REDIS_PASSWORD:kmhfZFWfzRWeHri}"
+  es_uris: "${ES_URIS:http://192.168.1.11:31904}"
+
 server:
   port: 8080
   servlet:

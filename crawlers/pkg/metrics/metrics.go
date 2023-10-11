@@ -10,6 +10,8 @@ var MetricsRuningCatalogPageTasksGauge prometheus.Gauge
 var MetricsRuningNovelTasksGauge prometheus.Gauge
 var MetricsRuningChapterTasksGauge prometheus.Gauge
 
+var GaugeRuningTasks prometheus.Gauge
+
 var MetricsTotalCatalogPageTasks prometheus.Counter
 var MetricsTotalNovelTasks prometheus.Counter
 var MetricsTotalChapterTasks prometheus.Counter
@@ -23,6 +25,11 @@ var MetricsSucceedNovelTasksGauge prometheus.Gauge
 var MetricsSucceedChapterTasksGauge prometheus.Gauge
 
 func init() {
+	GaugeRuningTasks = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "running_tasks_gauge",
+		Help: "running tasks gauge metrics",
+	})
+
 	MetricsRuningCatalogPageTasksGauge = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "crawler_running_catalog_page_tasks_count",
 		Help: "The total number of running catalog page tasks",

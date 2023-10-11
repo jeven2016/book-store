@@ -6,6 +6,19 @@ const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
+function getFileLoaderRule(rules) {
+  for (const rule of rules) {
+    if ('oneOf' in rule) {
+      const found = getFileLoaderRule(rule.oneOf);
+      if (found) {
+        return found;
+      }
+    } else if (rule.test === undefined && rule.type === 'asset/resource') {
+      return rule;
+    }
+  }
+}
+
 module.exports = {
   webpack: {
     alias: {
@@ -42,7 +55,17 @@ module.exports = {
       )
     ],
 
-    configure: {}
+    configure: (config) => {
+      //https://github.com/facebook/create-react-app/issues/11889
+      //fix: require('react-spring') in react-windy-ui returns a string instead of an object
+      const fileLoaderRule = getFileLoaderRule(config.module.rules);
+      if (!fileLoaderRule) {
+        throw new Error('File loader not found');
+      }
+      fileLoaderRule.exclude.push(/\.cjs$/);
+      // ...
+      return config;
+    }
   },
   jest: {
     configure: {

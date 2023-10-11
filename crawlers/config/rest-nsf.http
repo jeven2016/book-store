@@ -17,8 +17,8 @@ POST http://localhost:8080/catalogs
 content-type: application/json
 
 {
-  "siteId": "64ea11b58b1f9d5c2e308b8a",
-  "name": "武侠",
+  "siteId": "64fc0401b28d6f3158b0ebf1",
+  "name": "辣文",
   "url": "https://www.nosadfun.com/category/8/",
   "crawlerType": 3
 }
@@ -29,7 +29,7 @@ POST http://localhost:8080/tasks/catalog-pages
 Content-Type: application/json
 
 {
-  "catalogId": "64f308e4eddbeeaa4bb06c01",
+  "catalogId": "64fc0417b28d6f3158b0ebf2",
   "url": "https://www.nosadfun.com/category/2/1-5.html"
 }
 
@@ -39,6 +39,6 @@ POST http://localhost:8080/tasks/novels
 Content-Type: application/json
 
 {
-  "catalogId": "64ea12bb8b1f9d5c2e308b8b",
-  "url": "https://www.nosadfun.com/book/229662/catalog/"
+  "catalogId": "64fc0417b28d6f3158b0ebf2",
+  "url": "https://www.nosadfun.com/book/26573/"
 }

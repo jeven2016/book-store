@@ -35,3 +35,6 @@ out/
 .vscode/
 
 *.log
+*.log.gz
+!/crawlers/crawlers-*.log.gz
+!/crawlers/crawlers.log

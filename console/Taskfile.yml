@@ -1,0 +1,30 @@
+version: '3'
+
+env:
+  CONSOLE_IMAGE: '{{ .DOCKER_ADDR }}/{{ .DOCKER_REPO }}/console:{{ .RELEASE_VERSION }}'
+
+tasks:
+  install:
+    desc: install all dependencies
+    cmds:
+      - yarn install
+
+  build:
+    desc: build and generate artifacts
+    deps: [ install ]
+    cmds:
+      - rm -rf build
+      - yarn build
+
+  docker:
+    desc: build docker
+    deps: [ build ]
+    cmds:
+      - docker build -f Dockerfile ./ -t $CONSOLE_IMAGE --rm
+
+  push_docker:
+    desc: tag the existing docker image and push it into remote repository
+    deps: [ docker ]
+    cmds:
+      - docker login $DOCKER_ADDR -u $REPO_USER -p $REPO_PASSWORD
+      - docker push $CONSOLE_IMAGE

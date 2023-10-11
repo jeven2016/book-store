@@ -42,7 +42,7 @@ const (
 	CollectionContent         = "content"
 )
 
-var ConfigFiles = []string{"/etc/crawlers.yaml", "./crawlers.yaml"}
+var ConfigFiles = []string{"/etc/crawlers/crawlers.yaml"}
 
 type CrawlerResourceType int
 

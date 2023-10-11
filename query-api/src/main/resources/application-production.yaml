@@ -1,3 +1,4 @@
+
 spring:
   data:
     mongodb:
@@ -8,13 +9,13 @@ spring:
       #      password: db_pwd
       #      authentication-database: admin
       #refer to https://www.mongodb.com/docs/manual/reference/connection-string/#connections-connection-options
-      uri: mongodb://db_user:db_pwd@192.168.1.11:30003/books?connectTimeoutMS=20000&minPoolSize=0&maxPoolSize=10&maxIdleTimeMS=900000&authSource=admin
+      uri: ${env.mongodb_uri}
 
 
     redis:
-      host: 192.168.1.11
-      port: 30025
-      password: kmhfZFWfzRWeHri
+      host: ${env.redis_host}
+      port: ${env.redis_port}
+      password: ${env.redis_password}
       lettuce:
         pool:
           # 连接池最大连接数 默认8 ，负数表示没有限制

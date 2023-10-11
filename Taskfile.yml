@@ -1,0 +1,38 @@
+version: '3'
+
+env:
+  DOCKER_ADDR: 192.168.1.21:8082
+  DOCKER_REPO: docker-local
+
+  REPO_USER: admin
+  REPO_PASSWORD: Wzjzzl2015
+
+  RELEASE_VERSION: 0.1
+
+includes:
+  crawler:
+    #By default, included Taskfile's tasks are run in the current directory, even if the Taskfile is in another
+    #directory, but you can force its tasks to run in another directory by using this alternative syntax:
+    taskfile: ./crawlers/Taskfile.yml
+    dir: ./crawlers
+
+  #使用子目录为根目录
+  console:
+    taskfile: ./console/Taskfile.yml
+    dir: ./console
+
+  query-api:
+    taskfile: ./query-api/Taskfile.yml
+    dir: ./query-api
+
+
+## Build all docker images and then upload them to remote repository
+tasks:
+  push_docker:
+    desc: run all pushing docker tasks
+    deps:
+      - task: console:push_docker
+      - task: query-api:push_docker
+      - task: crawler:push_docker
+    cmds:
+      - echo "Congratulations, all tasks finished and the corresponding images are pushed"

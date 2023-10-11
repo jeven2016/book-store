@@ -1,16 +1,18 @@
-FROM golang:alpine AS builder
-RUN apk add --no-cache ca-certificates \
-        make \
-        git
-COPY . /go-build
-RUN cd /go-build && \
-        export GO111MODULE=on && \
+#ARG DOCKER_REGISTRY
+
+FROM docker.io/library/golang:1.19.13 AS builder
+#ARG GOPROXY
+
+WORKDIR /workspace
+COPY . /workspace
+COPY docker/task /workspace
+RUN cd /workspace && \
         export GOPROXY=https://goproxy.io && \
-        go build -o 'golang-exe' path/to/main/
+        ./task build
+
+RUN ls /workspace/bin/
 
 FROM alpine
-RUN apk add --no-cache tzdata
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs
-COPY --from=builder /go-build/golang-exe /usr/bin/golang-exe
+COPY --from=builder /workspace/bin/crawlers /usr/bin/crawlers
 ENV TZ Asia/Shanghai
-CMD ["golang-exe"]
+ENTRYPOINT ["crawlers"]
