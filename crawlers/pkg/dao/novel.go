@@ -13,6 +13,7 @@ import (
 )
 
 type novelInterface interface {
+	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error)
 	FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error)
@@ -20,6 +21,15 @@ type novelInterface interface {
 }
 
 type novelDaoImpl struct{}
+
+func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error) {
+	novel, err := FindByMongoFilter(ctx, bson.M{common.ColumId: id}, common.CollectionNovel, &entity.Novel{},
+		&options.FindOneOptions{})
+	if err != nil || novel == nil {
+		return nil, err
+	}
+	return novel, err
+}
 
 func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error) {
 	novel, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionNovel, &entity.Novel{},

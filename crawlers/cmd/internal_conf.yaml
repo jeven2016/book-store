@@ -69,3 +69,16 @@ webSites:
         enabled: true
         skipIfPresent: true
         skipSaveIfPresent: true
+
+  - name: cartoon18
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: page=([^\&]+)
+      pagePrefix: "page="
+    mongoCollections:
+      novel: novel
+      catalogPage: catalogPage
+    attributes:
+      directory: /home/cloud/Desktop/cartoon18/
+      consumers: 3
+

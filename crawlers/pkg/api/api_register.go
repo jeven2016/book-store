@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"net/http"
 	"time"
 )
 
@@ -24,6 +25,9 @@ func RegisterEndpoints() *gin.Engine {
 	engine.Use(ginzap.RecoveryWithZap(logger, false))
 
 	hd := NewHandler()
+	engine.GET("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
 	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	engine.POST("/catalogs", hd.CreateCatalog)
 	engine.POST("/sites", hd.CreateSite)

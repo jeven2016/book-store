@@ -7,6 +7,7 @@ const (
 	SiteOneJ           = "onej"
 	SiteYzs8           = "yzs8"
 	SiteNsf            = "nsf"
+	Cartoon18          = "cartoon18"
 
 	CollyMaxRetries = 3
 
