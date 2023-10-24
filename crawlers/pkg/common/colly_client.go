@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -18,7 +19,8 @@ func NewCollector(log *zap.Logger) *colly.Collector {
 		//设置忽略robots协议
 		colly.IgnoreRobotsTxt())
 	c.SetRequestTimeout(50 * time.Second)
-	c.WithTransport(&http.Transport{
+
+	httpTransport := &http.Transport{
 		DisableKeepAlives: true, // Colly uses HTTP keep-alive to enhance scraping speed
 		DialContext: (&net.Dialer{
 			Timeout:   90 * time.Second,
@@ -29,7 +31,19 @@ func NewCollector(log *zap.Logger) *colly.Collector {
 		TLSHandshakeTimeout:   90 * time.Second,
 		ExpectContinueTimeout: 90 * time.Second,
 		Proxy:                 http.ProxyFromEnvironment, //从环境变量获取http proxy地址
-	})
+	}
+
+	//set http proxy
+	if proxy := GetConfig().Http.Proxy; proxy != "" {
+		proxyUrl, err := url.Parse(proxy)
+		if err != nil {
+			zap.L().Error("invalid proxy", zap.String("proxy", proxy))
+			return nil
+		}
+		httpTransport.Proxy = http.ProxyURL(proxyUrl)
+	}
+
+	c.WithTransport(httpTransport)
 
 	// 对于匹配的域名(当前配置为任何域名),将请求并发数配置为2
 	// 通过测试发现,RandomDelay参数对于同步模式也生效

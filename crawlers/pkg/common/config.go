@@ -37,6 +37,7 @@ type EtcdConfig struct {
 type HttpSetting struct {
 	Port    uint   `koanf:"port"`
 	Address string `koanf:"address"`
+	Proxy   string `koanf:"proxy"`
 }
 
 type TaskPoolSetting struct {

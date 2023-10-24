@@ -142,7 +142,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 		catalogPageTask.CreatedDate = &currentTime
 	}
 
-	if !skipSaveIfPresent {
+	if !exists || !skipSaveIfPresent {
 		if _, err = dao.CatalogPageTaskDao.Save(context.Background(), &catalogPageTask); err != nil {
 			zap.L().Error("failed to save catalogPageTask", zap.Error(err))
 			hasError = true
@@ -267,7 +267,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 		chapterMessages = nil
 	}
 
-	if !skipSaveIfPresent {
+	if !exists || !skipSaveIfPresent {
 		if _, err = dao.NovelTaskDao.Save(context.Background(), &novelTask); err != nil {
 			zap.L().Error("failed to save novelTask", zap.Error(err))
 			hasError = true
@@ -379,7 +379,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 		chapterTask.CreatedDate = &currentTime
 	}
 
-	if !skipSaveIfPresent && enableChapter {
+	if (!exists || !skipSaveIfPresent) && enableChapter {
 		if _, err = dao.ChapterTaskDao.Save(context.Background(), &chapterTask); err != nil {
 			zap.L().Error("failed to save chapterTask", zap.Error(err))
 			hasError = true

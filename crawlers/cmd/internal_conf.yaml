@@ -3,6 +3,7 @@ applicationName: crawlers
 http:
   address: 0.0.0.0
   port: 8080
+  proxy: http://localhost:10809
 
 
 redis:
@@ -80,5 +81,18 @@ webSites:
       catalogPage: catalogPage
     attributes:
       directory: /home/cloud/Desktop/cartoon18/
-      consumers: 3
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      chapter:
+        enabled: true
+        skipIfPresent: true
+        skipSaveIfPresent: true
 

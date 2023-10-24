@@ -55,10 +55,18 @@ func (c *ChromePool) PutInstance(instance context.Context) {
 }
 
 func OpenChrome(cnt context.Context) (ctx context.Context, cleanFunc func()) {
+	var customOpts = []chromedp.ExecAllocatorOption{
+		chromedp.Flag("headless", true),
+	}
+
 	// 创建一个自定义的Chrome选项
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true), // 取消headless模式
-	)
+	opts := append(chromedp.DefaultExecAllocatorOptions[:])
+
+	//set http proxy
+	if proxy := GetConfig().Http.Proxy; proxy != "" {
+		customOpts = append(customOpts, chromedp.Flag("proxy-server", proxy))
+	}
+	customOpts = append(chromedp.DefaultExecAllocatorOptions[:], customOpts...)
 
 	// 创建一个自定义的Chrome执行器
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(cnt, opts...)
