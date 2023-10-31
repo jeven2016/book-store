@@ -138,15 +138,6 @@ loop:
 	return nil
 }
 
-func (rd *Redis) fetchFromStream(ctx context.Context, streamName, consumerId, consumerGroup string) {
-	defer func() {
-		if err := recover(); err != nil {
-			zap.S().Errorf("an unexpected error occurs, %v", err)
-		}
-	}()
-
-}
-
 // Len returns the current stream length
 func (rd *Redis) Len(ctx context.Context, streamName string) (int64, error) {
 	streamLen, err := rd.Client.XLen(ctx, streamName).Result()

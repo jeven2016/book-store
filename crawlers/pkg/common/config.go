@@ -68,6 +68,9 @@ type SiteConfig struct {
 	MongoCollections *MongoCollections `koanf:"mongoCollections"`
 	Attributes       map[string]string `koanf:"attributes"`
 	CrawlerSettings  *CrawlerSetting   `koanf:"crawlerSettings"`
+
+	//whether to transfer redis message via separated redis streamuse separate space
+	UseSeparateSpace bool `koanf:"useSeparateSpace"`
 }
 
 type RedisConfig struct {
@@ -81,6 +84,13 @@ type RedisConfig struct {
 	AutoCreateConsumerGroups bool   `koanf:"autoCreateConsumerGroups"`
 }
 
+type CrawlerSettings struct {
+	CatalogPageTaskParallelism int      `koanf:"catalogPageTaskParallelism"`
+	NovelTaskParallelism       int      `koanf:"novelTaskParallelism"`
+	ChapterTaskParallelism     int      `koanf:"chapterTaskParallelism"`
+	EcludedNovelUrls           []string `koanf:"excludedNovelUrls"`
+}
+
 type ServerConfig struct {
 	ApplicationName string           `koanf:"applicationName"`
 	Http            *HttpSetting     `koanf:"http"`
@@ -88,6 +98,7 @@ type ServerConfig struct {
 	Redis           *RedisConfig     `koanf:"redis"`
 	Mongo           *MongoConfig     `koanf:"mongodb"`
 	LogSetting      *LogConfig       `koanf:"logConfig"`
+	CrawlerSettings *CrawlerSettings `koanf:"crawlerSettings"`
 	TaskPoolSetting *TaskPoolSetting `koanf:"taskPool"`
 	WebSites        []SiteConfig     `koanf:"webSites"`
 }

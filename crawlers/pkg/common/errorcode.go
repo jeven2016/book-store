@@ -17,6 +17,7 @@ const (
 	ErrDuplicated
 	ErrCatalogNotFound
 	ErrSiteNotFound
+	ErrExcludedNovel
 )
 
 var errMap = map[ErrorCode]string{}
@@ -29,9 +30,10 @@ func init() {
 	errMap[ErrCodeTaskSubmitted] = "a task is already submitted"
 	errMap[ErrPublishMessage] = "failed to publish the message, reason: %s"
 	errMap[ErrParsePageUrl] = "failed to parse the page url, reason: %s"
-	errMap[ErrDuplicated] = "it's duplicated to save with %s(%s)"
+	errMap[ErrDuplicated] = "it's duplicated to save with %v(%v)"
 	errMap[ErrCatalogNotFound] = "catalog '%s' not found"
 	errMap[ErrSiteNotFound] = "site '%s' not found"
+	errMap[ErrExcludedNovel] = "excluded novel task submitted"
 }
 
 func GetErrMessage(errCode ErrorCode, params ...any) string {

@@ -5,8 +5,10 @@ import (
 	"crawlers/pkg/common"
 	"crawlers/pkg/model"
 	"crawlers/pkg/website/cartoon18"
+	"crawlers/pkg/website/crawlers"
 	nfs "crawlers/pkg/website/nsf"
 	"crawlers/pkg/website/onej"
+	"go.uber.org/zap"
 )
 
 type SiteCrawler interface {
@@ -16,6 +18,7 @@ type SiteCrawler interface {
 	CrawlChapterPage(ctx context.Context, chapterMsg *model.ChapterTask, skipSaveIfPresent bool) error
 }
 
+// customized processors should be registered
 var siteCrawlerMap = make(map[string]SiteCrawler)
 var siteTaskProcessorMap = make(map[string]TaskProcessor)
 
@@ -23,11 +26,13 @@ func RegisterProcessors() {
 	siteCrawlerMap[common.SiteOneJ] = onej.NewSiteOnej()
 	siteCrawlerMap[common.SiteNsf] = nfs.NewNsfCrawler()
 	siteCrawlerMap[common.Cartoon18] = cartoon18.NewCartoonCrawler()
+	siteCrawlerMap[common.Kxkm] = crawlers.NewKxkmCrawler()
 
-	defaultTaskProcessor := NewTaskProcessor()
-	siteTaskProcessorMap[common.SiteOneJ] = defaultTaskProcessor
-	siteTaskProcessorMap[common.SiteNsf] = defaultTaskProcessor
-	siteTaskProcessorMap[common.Cartoon18] = defaultTaskProcessor
+	//defaultTaskProcessor := NewTaskProcessor()
+	//siteTaskProcessorMap[common.SiteOneJ] = defaultTaskProcessor
+	//siteTaskProcessorMap[common.SiteNsf] = defaultTaskProcessor
+	//siteTaskProcessorMap[common.Cartoon18] = defaultTaskProcessor
+	//siteTaskProcessorMap[common.Kxkm] = defaultTaskProcessor
 }
 
 func GetSiteCrawler(siteName string) SiteCrawler {
@@ -35,5 +40,11 @@ func GetSiteCrawler(siteName string) SiteCrawler {
 }
 
 func GetSiteTaskProcessor(siteName string) TaskProcessor {
-	return siteTaskProcessorMap[siteName]
+	if pr, ok := siteTaskProcessorMap[siteName]; ok {
+		return pr
+	}
+	zap.L().Info("the default processor takes effect", zap.String("siteName", siteName))
+
+	//return default processor
+	return NewTaskProcessor()
 }

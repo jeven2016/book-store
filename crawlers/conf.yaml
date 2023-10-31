@@ -2,7 +2,7 @@ applicationName: crawlers
 
 http:
   address: 0.0.0.0
-  port: 8080
+  port: 8089
   proxy: http://localhost:10809
 
 
@@ -39,7 +39,7 @@ logConfig:
 crawlerSettings:
   catalogPageTaskParallelism: 1
   novelTaskParallelism: 2
-  chapterTaskParallelism: 3
+  chapterTaskParallelism: 4
   excludedNovelUrls:
     - https://www.cartoon18.com/v/XYR6A
     - https://www.cartoon18.com/v/XYyzR
@@ -137,7 +137,7 @@ webSites:
         skipSaveIfPresent: true
 
 
-  - name: kxkm
+  - name: wucomic
     regexSettings:
       #拼装每一页url
       parsePageRegex: page=([^\&]+)

@@ -10,26 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const consumersNumber = 5
-
-func RegisterStream(ctx context.Context) error {
-	pr := NewTaskProcessor()
-
-	//consume catalog page ColumnUrl
-	if err := catalogPageStream(ctx, pr); err != nil {
-		return err
-	}
-
-	if err := novelStream(ctx, pr); err != nil {
-		return err
-	}
-
-	if err := chapterStream(ctx, pr); err != nil {
-		return err
-	}
-	return nil
-}
-
 type StreamStepDefinition[T, R, E, U any] struct {
 	sourceStream        string
 	sourceConsumerGroup string
@@ -38,11 +18,49 @@ type StreamStepDefinition[T, R, E, U any] struct {
 	flowFlatMap         flow.FlatMap[E, U]
 }
 
+func RegisterStream(ctx context.Context) error {
+	pr := NewTaskProcessor()
+	params := stream.DefaultStreamTaskParams()
+
+	//consume catalog page ColumnUrl
+	if err := catalogPageStream(ctx, pr, params); err != nil {
+		return err
+	}
+
+	if err := novelStream(ctx, pr, params); err != nil {
+		return err
+	}
+
+	if err := chapterStream(ctx, pr, params); err != nil {
+		return err
+	}
+	return nil
+}
+
+func LaunchSiteTasks(ctx context.Context, siteName string) (err error) {
+	params := stream.GenStreamTaskParams(siteName)
+	pr := GetSiteTaskProcessor(siteName)
+
+	//consume catalog page ColumnUrl
+	if err = catalogPageStream(ctx, pr, params); err != nil {
+		return err
+	}
+
+	if err = novelStream(ctx, pr, params); err != nil {
+		return err
+	}
+
+	if err = chapterStream(ctx, pr, params); err != nil {
+		return
+	}
+	return
+}
+
 // 解析page url得到每一个novel的url
 // from: catalogPage stream => novel stream
-func catalogPageStream(ctx context.Context, pr TaskProcessor) error {
+func catalogPageStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTaskParams) error {
 	source, err := stream.NewRedisStreamSource(context.Background(), common.GetSystem().RedisClient,
-		stream.CatalogPageUrlStream, stream.CatalogPageUrlStreamConsumer)
+		params.CatalogPageStreamName, params.CatalogPageStreamConsumer)
 	if err != nil {
 		return err
 	}
@@ -52,9 +70,9 @@ func catalogPageStream(ctx context.Context, pr TaskProcessor) error {
 			Via(flow.NewMap(pr.HandleCatalogPageTask, 1)).
 			Via(flow.NewFlatMap(func(novelMsg []model.NovelTask) []model.NovelTask {
 				return novelMsg
-			}, 1)).
+			}, uint(common.GetConfig().CrawlerSettings.CatalogPageTaskParallelism))).
 			To(stream.NewRedisStreamSink(ctx, common.GetSystem().RedisClient,
-				stream.NovelUrlStream))
+				params.NovelPageStreamName))
 	})
 	if err != nil {
 		zap.S().Error("failed to submit task", zap.Error(err))
@@ -64,20 +82,20 @@ func catalogPageStream(ctx context.Context, pr TaskProcessor) error {
 }
 
 // 处理每一个novel
-func novelStream(ctx context.Context, pr TaskProcessor) error {
+func novelStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTaskParams) error {
 	source, err := stream.NewRedisStreamSource(context.Background(), common.GetSystem().RedisClient,
-		stream.NovelUrlStream, stream.NovelUrlStreamConsumer)
+		params.NovelPageStreamName, params.NovelPageStreamConsumer)
 	if err != nil {
 		return err
 	}
 
 	//item url
 	sink := stream.NewRedisStreamSink(ctx, common.GetSystem().RedisClient,
-		stream.ChapterUrlStream)
+		params.ChapterPageStreamName)
 
 	err = common.GetSystem().TaskPool.Submit(func() {
 		source.
-			Via(flow.NewMap(pr.HandleNovelTask, consumersNumber)).
+			Via(flow.NewMap(pr.HandleNovelTask, uint(common.GetConfig().CrawlerSettings.NovelTaskParallelism))).
 			Via(flow.NewFlatMap(func(novelMsg []model.ChapterTask) []model.ChapterTask {
 				return novelMsg
 			}, 1)).
@@ -91,16 +109,16 @@ func novelStream(ctx context.Context, pr TaskProcessor) error {
 }
 
 // 处理每一个novel
-func chapterStream(ctx context.Context, pr TaskProcessor) error {
+func chapterStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTaskParams) error {
 	source, err := stream.NewRedisStreamSource(ctx, common.GetSystem().RedisClient,
-		stream.ChapterUrlStream, stream.ChapterUrlStreamConsumer)
+		params.ChapterPageStreamName, params.ChapterPageStreamConsumer)
 	if err != nil {
 		return err
 	}
 
 	err = common.GetSystem().TaskPool.Submit(func() {
 		source.
-			Via(flow.NewMap(pr.HandleChapterTask, consumersNumber)).
+			Via(flow.NewMap(pr.HandleChapterTask, uint(common.GetConfig().CrawlerSettings.ChapterTaskParallelism))).
 			To(extension.NewIgnoreSink())
 	})
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"crawlers/pkg/model/entity"
 	"crawlers/pkg/stream"
 	"crawlers/pkg/website"
+	"github.com/duke-git/lancet/v2/slice"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -63,7 +64,7 @@ func (h *Handler) HandleCatalogPage(c *gin.Context) {
 				Url:       url,
 				Status:    common.TaskStatusNotStared,
 			}
-			if err := common.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
+			if err = common.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError,
 					common.FailsWithParams(common.ErrPublishMessage, err.Error()))
 				h.sys.Log.Warn("failed to publish a message",
@@ -109,6 +110,13 @@ func (h *Handler) HandleNovelPage(c *gin.Context) {
 
 	var site *entity.Site
 	var hasError bool
+
+	if slice.Contain(common.GetConfig().CrawlerSettings.EcludedNovelUrls, novelTask.Url) {
+		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			common.FailsWithMessage(common.ErrExcludedNovel, err.Error()))
+		return
+	}
 
 	if site, hasError = h.getTaskEntity(c, novelTask.CatalogId); hasError {
 		return

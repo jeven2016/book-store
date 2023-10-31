@@ -8,6 +8,7 @@ const (
 	SiteYzs8           = "yzs8"
 	SiteNsf            = "nsf"
 	Cartoon18          = "cartoon18"
+	Kxkm               = "kxkm"
 
 	CollyMaxRetries = 3
 
@@ -86,3 +87,5 @@ const (
 var ErrDecodingDocument = errors.New("document retrieved without decoding process")
 var ErrDuplicatedDocument = errors.New("document is duplicated")
 var ErrDocumentIdExists = errors.New("document's ID exists")
+
+const DefaultRetries = 3

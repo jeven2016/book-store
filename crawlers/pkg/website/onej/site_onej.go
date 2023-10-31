@@ -133,7 +133,7 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 		if imgUrl, ok := novelPageMsg.Attributes[imgSrcKey]; ok {
 			imgUrlString := imgUrl.(string)
 			localFile := strings.TrimRight(destDir, "/") + "/" + strings.ToLower(novelPageMsg.Name) + ".jpg"
-			restyClient, err := common.GetRestyClient(imgUrlString)
+			restyClient, err := common.GetRestyClient(imgUrlString, true)
 			if err != nil {
 				return nil, err
 			}
@@ -149,7 +149,7 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 		//下载附件
 		if attachmentUrl, ok := novelPageMsg.Attributes[attachmentUriKey]; ok {
 			attachUrlString := attachmentUrl.(string)
-			restyAttClient, err := common.GetRestyClient(attachUrlString)
+			restyAttClient, err := common.GetRestyClient(attachUrlString, true)
 			if err != nil {
 				return nil, err
 			}

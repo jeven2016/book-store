@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/duke-git/lancet/v2/convertor"
+	"github.com/duke-git/lancet/v2/slice"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -46,22 +48,21 @@ func (d DefaultTaskProcessor) ParsePageUrls(siteName, originPageUrl string) ([]s
 func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs []model.NovelTask) {
 	var catalogPageTask model.CatalogPageTask
 	var err error
-	var hasError bool
 
 	metrics.MetricsRuningCatalogPageTasksGauge.Inc()
 	metrics.MetricsTotalCatalogPageTasks.Inc()
 	defer func() {
 		metrics.MetricsRuningCatalogPageTasksGauge.Dec()
-		if hasError {
+		if err != nil {
 			metrics.MetricsFailedCatalogPageTasksGauge.Inc()
 		} else {
+			zap.L().Info("the count of novel tasks for this catalog page", zap.Int("count", len(novelMsgs)))
 			metrics.MetricsSucceedCatalogPageTasksGauge.Inc()
 		}
 	}()
 
 	if err = json.Unmarshal([]byte(jsonData), &catalogPageTask); err != nil {
 		zap.L().Error("json decode", zap.Error(err), zap.String("data", jsonData))
-		hasError = true
 		return nil
 	}
 	zap.L().Info("handle catalogPageTask task", zap.String("json", jsonData))
@@ -85,13 +86,11 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 		common.CollectionCatalogPageTask,
 		catalogPageTask.Url,
 		bson.M{
-			common.ColumnCatalogId: catalogPageTask.CatalogId, //catalogPageTask.catalogId
-			common.ColumnUrl:       catalogPageTask.Url,       //catalogPageTask.Url
+			common.ColumnUrl: catalogPageTask.Url, //catalogPageTask.Url
 		})
 
 	if err != nil {
 		zap.L().Warn("error occurs", zap.Error(err))
-		hasError = true
 		return nil
 	}
 	if exists && skipNovelIfPresent {
@@ -103,7 +102,6 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	crawler := GetSiteCrawler(catalogPageTask.SiteName)
 	if crawler == nil {
 		zap.L().Error("site downloader not found", zap.String("SiteName", catalogPageTask.SiteName))
-		hasError = true
 		return nil
 	}
 
@@ -111,14 +109,12 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	var existingTask *model.CatalogPageTask
 	if existingTask, err = dao.CatalogPageTaskDao.FindByUrl(context.Background(), catalogPageTask.Url); err != nil {
 		zap.L().Error("failed to retrieve catalog page task", zap.String("jsonData", jsonData), zap.Error(err))
-		hasError = true
 		return nil
 	}
 
 	currentTime := time.Now()
 	if novelMsgs, err = crawler.CrawlCatalogPage(context.Background(), &catalogPageTask); err != nil {
 		zap.L().Warn("CrawlCatalogPage error", zap.String("catalogUrl", catalogPageTask.Url), zap.Error(err))
-		hasError = true
 
 		//save failed, update the status
 		if existingTask != nil {
@@ -145,7 +141,6 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	if !exists || !skipSaveIfPresent {
 		if _, err = dao.CatalogPageTaskDao.Save(context.Background(), &catalogPageTask); err != nil {
 			zap.L().Error("failed to save catalogPageTask", zap.Error(err))
-			hasError = true
 		}
 	} else {
 		zap.L().Info("skip saving catalogPageTask", zap.String("url", catalogPageTask.Url),
@@ -160,13 +155,11 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	var novelTask model.NovelTask
 	var err error
 
-	var hasError bool
-
 	metrics.MetricsRuningNovelTasksGauge.Inc()
 	metrics.MetricsTotalNovelTasks.Inc()
 	defer func() {
 		metrics.MetricsRuningNovelTasksGauge.Dec()
-		if hasError {
+		if err != nil {
 			metrics.MetricsFailedNovelTasksGauge.Inc()
 		} else {
 			metrics.MetricsSucceedNovelTasksGauge.Inc()
@@ -175,9 +168,14 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 
 	if err = json.Unmarshal([]byte(jsonData), &novelTask); err != nil {
 		zap.L().Error("json decode", zap.Error(err), zap.String("data", jsonData))
-		hasError = true
-		return nil
+		return
 	}
+
+	if slice.Contain(common.GetConfig().CrawlerSettings.EcludedNovelUrls, novelTask.Url) {
+		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
+		return
+	}
+
 	zap.L().Info("handle novel task", zap.String("json", jsonData))
 
 	cfg := common.GetSiteConfig(novelTask.SiteName)
@@ -207,12 +205,10 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 		common.CollectionNovelTask,
 		novelTask.Url,
 		bson.M{
-			common.ColumnCatalogId: novelTask.CatalogId, //catalogPageTask.catalogId
-			common.ColumnUrl:       novelTask.Url,       //catalogPageTask.Url
+			common.ColumnUrl: novelTask.Url, //catalogPageTask.Url
 		})
 	if err != nil {
 		zap.L().Warn("error occurs", zap.Error(err))
-		hasError = true
 		return nil
 	}
 	if exists && skipNovelIfPresent {
@@ -224,7 +220,6 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	crawler := GetSiteCrawler(novelTask.SiteName)
 	if crawler == nil {
 		zap.L().Error("site crawler not found", zap.String("SiteName", novelTask.SiteName))
-		hasError = true
 		return nil
 	}
 
@@ -232,13 +227,11 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	var existingTask *model.NovelTask
 	if existingTask, err = dao.NovelTaskDao.FindByUrl(context.Background(), novelTask.Url); err != nil {
 		zap.L().Error("failed to retrieve novel page task", zap.String("jsonData", jsonData), zap.Error(err))
-		hasError = true
 		return nil
 	}
 
 	currentTime := time.Now()
 	if chapterMessages, err = crawler.CrawlNovelPage(context.Background(), &novelTask, skipSaveIfPresent); err != nil {
-		hasError = true
 		zap.L().Warn("CrawlNovelPage error", zap.String("novel", novelTask.Url), zap.Error(err))
 		//save failed, update the status
 		if existingTask != nil {
@@ -270,7 +263,6 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	if !exists || !skipSaveIfPresent {
 		if _, err = dao.NovelTaskDao.Save(context.Background(), &novelTask); err != nil {
 			zap.L().Error("failed to save novelTask", zap.Error(err))
-			hasError = true
 		}
 	} else {
 		zap.L().Info("skip saving novelTask", zap.String("url", novelTask.Url),
@@ -282,13 +274,12 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	var chapterTask model.ChapterTask
 	var err error
-	var hasError bool
 
 	metrics.MetricsRuningChapterTasksGauge.Inc()
 	metrics.MetricsTotalChapterTasks.Inc()
 	defer func() {
 		metrics.MetricsRuningChapterTasksGauge.Dec()
-		if hasError {
+		if err != nil {
 			metrics.MetricsFailedChapterTasksGauge.Inc()
 		} else {
 			metrics.MetricsSucceedChapterTasksGauge.Inc()
@@ -297,7 +288,6 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 
 	if err = json.Unmarshal([]byte(jsonData), &chapterTask); err != nil {
 		zap.L().Error("json decode", zap.Error(err), zap.String("data", jsonData))
-		hasError = true
 		return nil
 	}
 	zap.L().Info("handle chapter task", zap.String("json", jsonData))
@@ -325,12 +315,10 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 		common.CollectionChapterTask,
 		chapterTask.Url,
 		bson.M{
-			common.ColumnNovelId: chapterTask.NovelId, //catalogPageTask.catalogId
-			common.ColumnUrl:     chapterTask.Url,     //catalogPageTask.Url
+			common.ColumnUrl: chapterTask.Url, //catalogPageTask.Url
 		})
 	if err != nil {
 		zap.L().Warn("error occurs", zap.Error(err))
-		hasError = true
 		return nil
 	}
 	if exists && skipIfPresent {
@@ -341,7 +329,6 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	downloader := GetSiteCrawler(chapterTask.SiteName)
 	if downloader == nil {
 		zap.L().Error("site downloader not found", zap.String("SiteName", chapterTask.SiteName))
-		hasError = true
 		return nil
 	}
 
@@ -349,40 +336,55 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	var existingTask *model.ChapterTask
 	if existingTask, err = dao.ChapterTaskDao.FindByUrl(context.Background(), chapterTask.Url); err != nil {
 		zap.L().Error("failed to retrieve chapter page task", zap.String("jsonData", jsonData), zap.Error(err))
-		hasError = true
 		return nil
 	}
 
-	currentTime := time.Now()
-	if err = downloader.CrawlChapterPage(context.Background(), &chapterTask, skipSaveIfPresent); err != nil {
-		hasError = true
-		zap.L().Error("error occurred while downloading", zap.String("url", chapterTask.Url), zap.Error(err))
-		//save failed, update the status
-		if existingTask != nil {
-			if err = convertor.CopyProperties(&chapterTask, existingTask); err != nil {
-				zap.L().Error("failed to copy properties of catalog page task", zap.Error(err))
-				return nil
-			}
-			//如果之前重试过，重试次数加1
-			if chapterTask.Status == common.TaskStatusFailed ||
-				chapterTask.Status == common.TaskStatusRetryFailed {
-				chapterTask.Retries++
-				chapterTask.Status = common.TaskStatusRetryFailed
-			}
-		} else {
-			chapterTask.Status = common.TaskStatusFailed
+	var start int
+	var enabledRetry bool
+	for {
+		if enabledRetry && start >= common.DefaultRetries {
+			zap.L().Error("failed to retry for multiple times", zap.String("chapterUrl", chapterTask.Url),
+				zap.String("chapterName", chapterTask.Name))
+			break
 		}
-		chapterTask.LastUpdated = &currentTime
-	} else {
-		//已经处理过，记录该url
-		chapterTask.Status = common.TaskStatusFinished
-		chapterTask.CreatedDate = &currentTime
+		currentTime := time.Now()
+		if err = downloader.CrawlChapterPage(context.Background(), &chapterTask, skipSaveIfPresent); err != nil {
+			zap.L().Error("error occurred while downloading", zap.String("url", chapterTask.Url), zap.Error(err))
+
+			if strings.Contains(err.Error(), "Too Many Requests") {
+				enabledRetry = true
+				start++
+				zap.L().Error("will retry", zap.String("chapterUrl", chapterTask.Url), zap.String("chapterName", chapterTask.Name))
+				time.Sleep(3 * time.Second)
+			}
+
+			//save failed, update the status
+			if existingTask != nil {
+				if err = convertor.CopyProperties(&chapterTask, existingTask); err != nil {
+					zap.L().Error("failed to copy properties of catalog page task", zap.Error(err))
+					return nil
+				}
+				//如果之前重试过，重试次数加1
+				if chapterTask.Status == common.TaskStatusFailed ||
+					chapterTask.Status == common.TaskStatusRetryFailed {
+					chapterTask.Retries++
+					chapterTask.Status = common.TaskStatusRetryFailed
+				}
+			} else {
+				chapterTask.Status = common.TaskStatusFailed
+			}
+			chapterTask.LastUpdated = &currentTime
+		} else {
+			//已经处理过，记录该url
+			chapterTask.Status = common.TaskStatusFinished
+			chapterTask.CreatedDate = &currentTime
+			break
+		}
 	}
 
 	if (!exists || !skipSaveIfPresent) && enableChapter {
 		if _, err = dao.ChapterTaskDao.Save(context.Background(), &chapterTask); err != nil {
 			zap.L().Error("failed to save chapterTask", zap.Error(err))
-			hasError = true
 		}
 	} else {
 		zap.L().Info("skip saving chapter", zap.String("url", chapterTask.Url),

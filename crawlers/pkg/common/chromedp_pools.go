@@ -61,11 +61,11 @@ func OpenChrome(cnt context.Context) (ctx context.Context, cleanFunc func()) {
 
 	// 创建一个自定义的Chrome选项
 	opts := append(chromedp.DefaultExecAllocatorOptions[:])
-
+	customOpts = append(customOpts, chromedp.Flag("proxy-server", "http://localhot:10809"))
 	//set http proxy
-	if proxy := GetConfig().Http.Proxy; proxy != "" {
-		customOpts = append(customOpts, chromedp.Flag("proxy-server", proxy))
-	}
+	//if proxy := GetConfig().Http.Proxy; proxy != "" {
+	//	customOpts = append(customOpts, chromedp.Flag("proxy-server", proxy))
+	//}
 	customOpts = append(chromedp.DefaultExecAllocatorOptions[:], customOpts...)
 
 	// 创建一个自定义的Chrome执行器
