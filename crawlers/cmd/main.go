@@ -16,7 +16,7 @@ import (
 //go:embed internal_conf.yaml
 var configFile string
 
-const softwareVersion = "0.0.1"
+const softwareVersion = "0.1"
 const flagName = "config"
 
 func main() {
