@@ -33,13 +33,13 @@ func NewWucomicCrawler() *wucomicCrawler {
 	sys := common.GetSystem()
 	cfg := common.GetSiteConfig(common.Cartoon18)
 	if cfg == nil {
-		sys.Log.Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
 	}
 
 	return &wucomicCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(sys.Log),
+		colly:       common.NewCollector(zap.L()),
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),

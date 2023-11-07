@@ -1,9 +1,5 @@
 package common
 
-import (
-	"go.uber.org/zap"
-)
-
 var (
 	internalCfg *ServerConfig
 	system      *System
@@ -23,8 +19,4 @@ func GetSystem() *System {
 
 func SetSystem(sys *System) {
 	system = sys
-}
-
-func Logger() *zap.Logger {
-	return system.Log
 }

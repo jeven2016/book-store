@@ -33,13 +33,13 @@ func NewKxkmCrawler() *kxkmCrawler {
 	sys := common.GetSystem()
 	cfg := common.GetSiteConfig(common.Cartoon18)
 	if cfg == nil {
-		sys.Log.Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
 	}
 
 	return &kxkmCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(sys.Log),
+		colly:       common.NewCollector(zap.L()),
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),
@@ -76,10 +76,18 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 	var createdTime = time.Now()
 	var novel = entity.Novel{Attributes: make(map[string]interface{}), CreatedTime: &createdTime}
 	var chpTasks []model.ChapterTask
+	var novelFolder string
+
 	cly := c.colly.Clone()
 	//获取名称
 	cly.OnHTML(".anime__details__title  h3", func(element *colly.HTMLElement) {
 		novel.Name = strings.TrimSpace(c.zhConvertor.Read(element.Text))
+	})
+
+	//获取封面图片
+	var coverImageUrl string
+	cly.OnHTML(".anime__details__pic.set-bg", func(img *colly.HTMLElement) {
+		coverImageUrl = img.Attr("data-setbg")
 	})
 
 	//多章节情况：获取每一页上面的chapter内容
@@ -131,18 +139,35 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 
 	//create directory
 	if novelDir, ok := c.siteCfg.Attributes["directory"]; ok {
-		novelFolder := filepath.Join(novelDir, novel.Name)
+		novelFolder = filepath.Join(novelDir, novel.Name)
 
 		if fileutil.IsExist(novelFolder) {
 			zap.L().Info("[kxkm] duplicated novel and no need to create directory", zap.String("novelName", novel.Name))
-			return []model.ChapterTask{}, nil
+		} else {
+			err = os.MkdirAll(novelFolder, 0755)
 		}
-		if err = os.MkdirAll(novelFolder, 0755); err != nil {
-			return chpTasks, err
+
+		//下载封面图片
+		if err == nil && coverImageUrl != "" {
+			destFile := filepath.Join(novelFolder, "cover.jpg")
+			if exist := fileutil.IsExist(destFile); !exist {
+				client, err := common.GetRestyClient(novelTask.Url, true)
+				if err != nil {
+					return chpTasks, err
+				}
+				if _, err = client.R().SetOutput(destFile).Get(coverImageUrl); err != nil {
+					metrics.MetricsFailedComicPicTaskGauge.Inc()
+					zap.L().Error("[kxkm] failed to download cover picture", zap.String("url", coverImageUrl), zap.Error(err))
+					return chpTasks, err
+				} else {
+					metrics.MetricsComicPicDownloaded.Inc()
+					zap.L().Info("[kxkm] cover picture downloaded", zap.String("url", coverImageUrl), zap.String("localFile", destFile))
+				}
+			}
 		}
 	}
 
-	return chpTasks, nil
+	return chpTasks, err
 }
 
 func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) error {
@@ -170,6 +195,7 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 		return fmt.Errorf("no chapter directory specified %v", c.siteCfg.Attributes["directory"])
 	}
 
+	var fileFormat string
 	var i = 1
 	cly.OnHTML(".blog__details__content>img", func(img *colly.HTMLElement) {
 		if err != nil {
@@ -187,7 +213,10 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 			return
 		}
 
-		var fileFormat = ".jpg"
+		fileFormat, err = common.GetFileExtFromUrl(picUrl)
+		if err != nil {
+			return
+		}
 		destFile := filepath.Join(chapterDir, fmt.Sprintf("%04d", i)+fileFormat)
 		i++
 

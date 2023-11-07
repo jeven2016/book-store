@@ -14,7 +14,8 @@ type StartupParams struct {
 	EnableRedis   bool
 	EnableEtcd    bool
 	Config        Config
-	ShutdownHook  func() error
+	PreShutdown   func() error
+	PostShutdown  func() error
 }
 
 func Startup(params *StartupParams) *System {
@@ -26,18 +27,17 @@ func Startup(params *StartupParams) *System {
 	sc := params.Config.GetServerConfig()
 
 	// log初始化
-	logger := SetupLog(sc.ApplicationName, sc.LogSetting)
-	sys.Log = logger
+	SetupLog(sc.ApplicationName, sc.LogSetting)
 
 	if params.EnableRedis {
 		// 初始化redis
 		redisClient, err := NewRedis(sc.Redis)
 		if err != nil {
-			sys.Log.Error("failed to initialize for redis", zap.Error(err))
+			zap.L().Error("failed to initialize for redis", zap.Error(err))
 			shutdown(ctx, sys, params)
 			return nil
 		} else {
-			sys.Log.Info("Connecting to redis successfully")
+			zap.L().Info("Connecting to redis successfully")
 			sys.RedisClient = redisClient
 		}
 	}
@@ -46,11 +46,11 @@ func Startup(params *StartupParams) *System {
 		// 初始化Mongodb
 		mongoClient := &MongoClient{Config: sc.Mongo}
 		if err := mongoClient.StartInit(); err != nil {
-			sys.Log.Error("failed to connect mongodb", zap.Error(err))
+			zap.L().Error("failed to connect mongodb", zap.Error(err))
 			shutdown(ctx, sys, params)
 			return nil
 		} else {
-			sys.Log.Info("Connecting to mongodb successfully")
+			zap.L().Info("Connecting to mongodb successfully")
 			sys.MongoClient = mongoClient
 		}
 	}
@@ -58,26 +58,26 @@ func Startup(params *StartupParams) *System {
 	//init a routine pool
 	pool, err := ants.NewPool(sc.TaskPoolSetting.Capacity)
 	if err != nil {
-		sys.Log.Error("unable to init a routine pool", zap.Error(err))
+		zap.L().Error("unable to init a routine pool", zap.Error(err))
 		shutdown(ctx, sys, params)
 		return nil
 	} else {
-		sys.Log.Info("task pool initialized successfully")
+		zap.L().Info("task pool initialized successfully")
 	}
 	sys.TaskPool = pool
 
 	if params.EnableEtcd {
 		//submit a task to register this service
 		if err = sys.RegisterService(sc); err != nil {
-			sys.Log.Error("failed to register service in etcd", zap.String("app", sc.ApplicationName), zap.Error(err))
+			zap.L().Error("failed to register service in etcd", zap.String("app", sc.ApplicationName), zap.Error(err))
 			shutdown(ctx, sys, params)
 			return nil
 		} else {
-			sys.Log.Info("service registered in etcd", zap.String("app", sc.ApplicationName))
+			zap.L().Info("service registered in etcd", zap.String("app", sc.ApplicationName))
 		}
 	}
 
-	sys.Log.Info("server started successfully")
+	zap.L().Info("server started successfully")
 	exitChan := make(chan os.Signal)
 
 	err = sys.TaskPool.Submit(func() {
@@ -89,43 +89,48 @@ func Startup(params *StartupParams) *System {
 		shutdown(ctx, sys, params)
 	})
 	if err != nil {
-		sys.Log.Info("unable to submit a shutdown hook", zap.Error(err))
+		zap.L().Info("unable to submit a shutdown hook", zap.Error(err))
 		return nil
 	}
 	return sys
 }
 
 func shutdown(ctx context.Context, sys *System, params *StartupParams) {
-	sys.Log.Info("server is shutting down")
+	zap.L().Info("server is shutting down")
 
-	if params.ShutdownHook != nil {
-		if err := params.ShutdownHook(); err != nil {
-			sys.Log.Warn("an error occurs while calling shutdown hook", zap.Error(err))
+	if params.PreShutdown != nil {
+		if err := params.PreShutdown(); err != nil {
+			zap.L().Warn("an error occurs while calling shutdown hook", zap.Error(err))
 		}
 	}
 
 	if sys.RedisClient != nil {
 		if err := sys.RedisClient.Client.Close(); err != nil {
-			sys.Log.Warn("an error occurs while closing redis's connection", zap.Error(err))
+			zap.L().Warn("an error occurs while closing redis's connection", zap.Error(err))
 		}
 	}
 
 	if sys.MongoClient != nil {
 		if err := sys.MongoClient.Client.Disconnect(ctx); err != nil {
-			sys.Log.Warn("an error occurs while closing mongodb's connection", zap.Error(err))
+			zap.L().Warn("an error occurs while closing mongodb's connection", zap.Error(err))
 		}
 	}
 
 	//if sys.ServiceRegister != nil {
 	//	if sys.ServiceRegister != nil {
 	//		if err := sys.ServiceRegister.Cancel(ctx); err != nil {
-	//			sys.Log.Warn("an error occurs while closing etcd's connection", zap.Error(err))
+	//			zap.L().Warn("an error occurs while closing etcd's connection", zap.Error(err))
 	//		}
 	//	}
 	//}
 	if sys.TaskPool != nil {
 		sys.TaskPool.Release()
 	}
-	sys.Log.Info("shutdown operation will complete in few seconds")
-	//os.Exit(0)
+
+	zap.L().Info("shutdown completes")
+	if params.PostShutdown != nil {
+		if err := params.PostShutdown(); err != nil {
+			zap.L().Warn("an error occurs while calling post shutdown hook", zap.Error(err))
+		}
+	}
 }

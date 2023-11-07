@@ -18,7 +18,7 @@ var restyLock sync.Mutex
 func GetRestyClient(url string, retry bool) (*resty.Client, error) {
 	base := ParseBaseUri(url)
 	if base == "" {
-		return nil, fmt.Errorf("invalid url: %s", url)
+		return nil, fmt.Errorf("invalid testUrl: %s", url)
 	}
 
 	if client, ok := restyInstanceMap[base]; !ok {

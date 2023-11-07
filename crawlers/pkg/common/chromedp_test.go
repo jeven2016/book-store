@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var url = "https://www.nosadfun.com/book/14683/292251.html"
+var testUrl = "https://www.nosadfun.com/book/14683/292251.html"
 
 func TestFirstCase(t *testing.T) {
 	// create context
@@ -22,7 +22,7 @@ func TestFirstCase(t *testing.T) {
 	if err := chromedp.Run(ctx,
 		// emulate iPhone 7 landscape
 		chromedp.Emulate(device.IPadPro),
-		chromedp.Navigate(url),
+		chromedp.Navigate(testUrl),
 		chromedp.CaptureScreenshot(&b1),
 
 		// reset
@@ -49,14 +49,14 @@ func TestFirstCase(t *testing.T) {
 	    ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
 	    defer cancel()
 
-	    url := "http://webcode.me/click.html"
+	    testUrl := "http://webcode.me/click.html"
 
 	    var ua string
 
 	    err := chromedp.Run(ctx,
 
 	        chromedp.Emulate(device.IPhone11),
-	        chromedp.Navigate(url),
+	        chromedp.Navigate(testUrl),
 	        chromedp.Click("button", chromedp.NodeVisible),
 	        chromedp.Text("#output", &ua),
 	    )
@@ -73,7 +73,7 @@ In the example, we click on a button of a web page. The web page shows the clien
 err := chromedp.Run(ctx,
 
 	chromedp.Emulate(device.IPhone11),
-	chromedp.Navigate(url),
+	chromedp.Navigate(testUrl),
 	chromedp.Click("button", chromedp.NodeVisible),
 	chromedp.Text("#output", &ua),
 
@@ -107,10 +107,10 @@ func main() {
 
 	    defer cancel()
 
-	    url := "http://webcode.me"
+	    testUrl := "http://webcode.me"
 
 	    var buf []byte
-	    if err := chromedp.Run(ctx, ElementScreenshot(url, "body", &buf)); err != nil {
+	    if err := chromedp.Run(ctx, ElementScreenshot(testUrl, "body", &buf)); err != nil {
 	        log.Fatal(err)
 	    }
 
@@ -118,7 +118,7 @@ func main() {
 	        log.Fatal(err)
 	    }
 
-	    if err := chromedp.Run(ctx, FullScreenshot(url, 90, &buf)); err != nil {
+	    if err := chromedp.Run(ctx, FullScreenshot(testUrl, 90, &buf)); err != nil {
 	        log.Fatal(err)
 	    }
 
@@ -129,20 +129,20 @@ func main() {
 	    fmt.Println("screenshots created")
 	}
 
-func ElementScreenshot(url, sel string, res *[]byte) chromedp.Tasks {
+func ElementScreenshot(testUrl, sel string, res *[]byte) chromedp.Tasks {
 
 	    return chromedp.Tasks{
 
-	        chromedp.Navigate(url),
+	        chromedp.Navigate(testUrl),
 	        chromedp.Screenshot(sel, res, chromedp.NodeVisible),
 	    }
 	}
 
-func FullScreenshot(url string, quality int, res *[]byte) chromedp.Tasks {
+func FullScreenshot(testUrl string, quality int, res *[]byte) chromedp.Tasks {
 
 	    return chromedp.Tasks{
 
-	        chromedp.Navigate(url),
+	        chromedp.Navigate(testUrl),
 	        chromedp.FullScreenshot(res, quality),
 	    }
 	}
@@ -170,7 +170,7 @@ func TestReadContent(t *testing.T) {
 	if err := chromedp.Run(ctx,
 		// emulate iPhone 7 landscape
 		chromedp.Emulate(device.IPadPro),
-		chromedp.Navigate(url),
+		chromedp.Navigate(testUrl),
 		//chromedp.InnerHTML("div[class=RBGsectionThree-content]", &content, chromedp.ByQuery),
 		chromedp.InnerHTML(".RBGsectionThree-content", &content, chromedp.ByQuery),
 		chromedp.Tasks{},

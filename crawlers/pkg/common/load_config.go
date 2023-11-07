@@ -11,20 +11,26 @@ import (
 // Global koanf instance. Use "." as the key path delimiter. This can be "/" or any character.
 var k = koanf.New(".")
 
-func LoadConfig(internalCfg []byte, config Config) error {
+// LoadConfig loads the configuration files
+func LoadConfig(internalCfg []byte, config Config, extraConfigFilePath *string) error {
 
 	//load internal config
 	if err := k.Load(rawbytes.Provider(internalCfg), yaml.Parser()); err != nil {
 		return err
 	}
 
+	cfgPaths := ConfigFiles
+	if extraConfigFilePath != nil {
+		cfgPaths = append(cfgPaths, *extraConfigFilePath)
+	}
+
 	// load external configs
-	for _, f := range ConfigFiles {
+	for _, f := range cfgPaths {
 		if exists, err := IsFileExists(f); err != nil {
-			log.Printf(f + " ignored: " + err.Error())
+			log.Printf(f + " not found and ignored to load: " + err.Error())
 			continue
 		} else if exists {
-			if err := k.Load(file.Provider(f), yaml.Parser()); err != nil {
+			if err = k.Load(file.Provider(f), yaml.Parser()); err != nil {
 				PrintCmdErr(err)
 				continue
 			}

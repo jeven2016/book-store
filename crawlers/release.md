@@ -5,7 +5,8 @@
 4. using redis stream as message queue
 
 ### 0.2 (ongoing)
-1. integration: doc, multiple configuration files
+1. integration: swagger doc, multiple configuration files
 2. save a record into db and run corresponding crawler on demand
-3. more statistics provided for monitoring
+3. more statistics provided for monitoring (skipped images)
 4. bug fixes
+   - unable to load an external config file

@@ -78,7 +78,7 @@ func NewCollector(log *zap.Logger) *colly.Collector {
 
 		if r.StatusCode == http.StatusNotFound {
 			r.Ctx.Put("inValidPage", true)
-			log.Warn("no retries for 404 page", zap.String("url", r.Request.URL.String()))
+			log.Warn("no retries for 404 page", zap.String("testUrl", r.Request.URL.String()))
 			return
 		}
 

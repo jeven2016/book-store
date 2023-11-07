@@ -39,7 +39,7 @@ func NewCartoonCrawler() *CartoonCrawler {
 	return &CartoonCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(sys.Log),
+		colly:       common.NewCollector(zap.L()),
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),

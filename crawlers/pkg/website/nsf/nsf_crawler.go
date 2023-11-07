@@ -29,13 +29,13 @@ func NewNsfCrawler() *NsfCrawler {
 	sys := common.GetSystem()
 	cfg := common.GetSiteConfig(common.SiteNsf)
 	if cfg == nil {
-		sys.Log.Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
 	}
 
 	return &NsfCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(sys.Log),
+		colly:       common.NewCollector(zap.L()),
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),

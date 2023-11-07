@@ -29,7 +29,7 @@ func init() {
 	errMap[ErrCodePageUrlRequired] = "pageUrl is required"
 	errMap[ErrCodeTaskSubmitted] = "a task is already submitted"
 	errMap[ErrPublishMessage] = "failed to publish the message, reason: %s"
-	errMap[ErrParsePageUrl] = "failed to parse the page url, reason: %s"
+	errMap[ErrParsePageUrl] = "failed to parse the page testUrl, reason: %s"
 	errMap[ErrDuplicated] = "it's duplicated to save with %v(%v)"
 	errMap[ErrCatalogNotFound] = "catalog '%s' not found"
 	errMap[ErrSiteNotFound] = "site '%s' not found"

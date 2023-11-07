@@ -25,13 +25,13 @@ func NewSiteOnej() *SiteOnej {
 	sys := common.GetSystem()
 	cfg := common.GetSiteConfig(common.SiteOneJ)
 	if cfg == nil {
-		sys.Log.Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
 	}
 	return &SiteOnej{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		logger:      sys.Log,
-		colly:       common.NewCollector(sys.Log),
+		logger:      zap.L(),
+		colly:       common.NewCollector(zap.L()),
 		siteCfg:     cfg,
 		client:      resty.New(),
 	}

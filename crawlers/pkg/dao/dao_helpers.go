@@ -17,11 +17,11 @@ func FindById[T any](ctx context.Context, id primitive.ObjectID, collection stri
 
 func FindByMongoFilter[T any](ctx context.Context, mongoFilter interface{}, collection string,
 	decodedObj *T, opts ...*options.FindOneOptions) (*T, error) {
-	catalogCol := common.GetSystem().GetCollection(collection)
-	if catalogCol == nil {
+	col := common.GetSystem().GetCollection(collection)
+	if col == nil {
 		return nil, errors.New("collection not found: " + collection)
 	}
-	if result := catalogCol.FindOne(ctx, mongoFilter, opts...); result.Err() != nil {
+	if result := col.FindOne(ctx, mongoFilter, opts...); result.Err() != nil {
 		err := result.Err()
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil

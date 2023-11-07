@@ -6,6 +6,13 @@ env:
   CRAWLER_IMAGE: '{{ .DOCKER_ADDR }}/{{ .DOCKER_REPO }}/crawler:{{ .RELEASE_VERSION }}'
 
 tasks:
+  docs:
+    desc: generate documents
+    cmds:
+      # 每次执行都要确保GOPATH正常，且接口变动后，执行swag init
+      - echo $GOPATH
+      - swag init --g main.go
+
   local_docker: #使用本地的可执行文件编译Docker
     desc: locally build a docker image after code compiled
     cmds:
@@ -17,7 +24,7 @@ tasks:
     deps:
       - clean
     cmds:
-      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/crawlers  cmd/main.go
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/crawlers  main.go
 
   clean:
     cmds:

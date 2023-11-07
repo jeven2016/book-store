@@ -31,10 +31,9 @@ func NewTaskProcessor() TaskProcessor {
 }
 
 func (d DefaultTaskProcessor) ParsePageUrls(siteName, originPageUrl string) ([]string, error) {
-	sys := common.GetSystem()
 	cfg := common.GetSiteConfig(siteName)
 	if cfg == nil {
-		sys.Log.Sugar().Error("Could not find site config", zap.String("siteName", siteName))
+		zap.L().Sugar().Error("Could not find site config", zap.String("siteName", siteName))
 		return nil, errors.New("Could not find site config: " + siteName)
 	}
 	if cfg.RegexSettings == nil || cfg.RegexSettings.ParsePageRegex == "" {
@@ -82,7 +81,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	}
 
 	//check if page url is duplicated
-	exists, err := d.isDuplicatedCatalogPageTask(&catalogPageTask,
+	exists, err := d.isDuplicatedCatalogPageTask(&model.CatalogPageTask{},
 		common.CollectionCatalogPageTask,
 		catalogPageTask.Url,
 		bson.M{
@@ -138,6 +137,15 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 		catalogPageTask.CreatedDate = &currentTime
 	}
 
+	if c, ok := catalogPageTask.Attributes["onlyCoverImage"]; ok {
+		for i := 0; i < len(novelMsgs); i++ {
+			if novelMsgs[i].Attributes == nil {
+				novelMsgs[i].Attributes = make(map[string]interface{})
+				novelMsgs[i].Attributes["onlyCoverImage"] = c
+			}
+		}
+	}
+
 	if !exists || !skipSaveIfPresent {
 		if _, err = dao.CatalogPageTaskDao.Save(context.Background(), &catalogPageTask); err != nil {
 			zap.L().Error("failed to save catalogPageTask", zap.Error(err))
@@ -148,7 +156,6 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	}
 
 	return
-
 }
 
 func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages []model.ChapterTask) {
@@ -201,7 +208,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	}
 
 	//check if page url is duplicated
-	exists, err := d.isDuplicatedNovelTask(&novelTask,
+	exists, err := d.isDuplicatedNovelTask(&model.NovelTask{},
 		common.CollectionNovelTask,
 		novelTask.Url,
 		bson.M{
@@ -260,6 +267,10 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 		chapterMessages = nil
 	}
 
+	if val, ok := novelTask.Attributes["onlyCoverImage"]; ok && val.(bool) {
+		chapterMessages = nil
+	}
+
 	if !exists || !skipSaveIfPresent {
 		if _, err = dao.NovelTaskDao.Save(context.Background(), &novelTask); err != nil {
 			zap.L().Error("failed to save novelTask", zap.Error(err))
@@ -311,7 +322,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	}
 
 	//check if page url is duplicated
-	exists, err := d.isDuplicatedChapterTask(&chapterTask,
+	exists, err := d.isDuplicatedChapterTask(&model.ChapterTask{},
 		common.CollectionChapterTask,
 		chapterTask.Url,
 		bson.M{
@@ -448,6 +459,7 @@ func (t DefaultTaskProcessor) isDuplicatedChapterTask(cpTask *model.ChapterTask,
 // 检查是否已经处理过的url
 func (t DefaultTaskProcessor) isDuplicatedCatalogPageTask(cpTask *model.CatalogPageTask, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
+
 	jsonString, err := common.GetAndSet(context.Background(), url, func() (*string, error) {
 		if data, err := dao.FindByMongoFilter(context.Background(), bsonFilter, collectionName, cpTask, &options.FindOneOptions{}); err != nil {
 			return nil, err

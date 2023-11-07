@@ -1,5 +1,7 @@
 package dao
 
+import "context"
+
 var CatalogDao catalogInterface
 var SiteDao siteInterface
 var CatalogPageTaskDao catalogPageTaskInterface
@@ -9,7 +11,10 @@ var ChapterDao chapterInterface
 var ChapterTaskDao chapterTaskInterface
 var ContentDao contentInterface
 
-func InitDao() {
+// InitDao initialize for db
+func InitDao(ctx context.Context) {
+	EnsureMongoIndexes(ctx)
+
 	CatalogDao = &catalogDaoImpl{}
 	SiteDao = &siteDaoImpl{}
 	CatalogPageTaskDao = &catalogPageTaskDaoImpl{}

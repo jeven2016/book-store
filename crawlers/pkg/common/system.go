@@ -3,7 +3,6 @@ package common
 import (
 	"github.com/panjf2000/ants/v2"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.uber.org/zap"
 	"sync"
 )
 
@@ -11,9 +10,6 @@ var sysOnce = sync.Once{}
 var lock = sync.Mutex{}
 
 type System struct {
-	// Log /**全局Logger*/
-	Log *zap.Logger
-
 	RedisClient *Redis
 
 	MongoClient *MongoClient
