@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,11 +17,11 @@ type siteInterface interface {
 type siteDaoImpl struct{}
 
 func (s *siteDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error) {
-	return FindById(ctx, id, common.CollectionSite, &entity.Site{})
+	return FindById(ctx, id, base.CollectionSite, &entity.Site{})
 }
 
 func (s *siteDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
-	site, err := FindById(ctx, id, common.CollectionSite, &entity.Site{},
-		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
+	site, err := FindById(ctx, id, base.CollectionSite, &entity.Site{},
+		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return site != nil, err
 }

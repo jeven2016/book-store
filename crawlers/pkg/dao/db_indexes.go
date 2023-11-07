@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,15 +13,15 @@ import (
 
 // the collections exist with url index
 var urlIndexCollection = []string{
-	common.CollectionCatalogPageTask,
-	common.CollectionNovelTask,
-	common.CollectionChapterTask}
+	base.CollectionCatalogPageTask,
+	base.CollectionNovelTask,
+	base.CollectionChapterTask}
 
 var nameIndexCollection = []string{
-	common.CollectionCatalog,
-	common.CollectionSite,
-	common.CollectionNovel,
-	common.CollectionChapter,
+	base.CollectionCatalog,
+	base.CollectionSite,
+	base.CollectionNovel,
+	base.CollectionChapter,
 }
 
 // EnsureMongoIndexes ensure the collections exist with indexes
@@ -30,21 +30,21 @@ func EnsureMongoIndexes(ctx context.Context) {
 	for _, collection := range urlIndexCollection {
 		// options.Index().SetUnique(true)
 		//the following code fails if multiple rows conflict with url
-		ensureIndex(ctx, collection, bson.M{common.ColumnUrl: -1}, nil)
+		ensureIndex(ctx, collection, bson.M{base.ColumnUrl: -1}, nil)
 	}
 
 	for _, collection := range nameIndexCollection {
-		ensureIndex(ctx, collection, bson.M{common.ColumnName: -1}, nil)
+		ensureIndex(ctx, collection, bson.M{base.ColumnName: -1}, nil)
 	}
 
 	//for content
-	ensureIndex(ctx, common.CollectionContent,
-		bson.M{common.ColumnParentId: 0, common.ColumnPageNo: -1}, nil)
+	ensureIndex(ctx, base.CollectionContent,
+		bson.M{base.ColumnParentId: 0, base.ColumnPageNo: -1}, nil)
 	zap.L().Info("completed checking the indexes of collections")
 }
 
 func ensureIndex(ctx context.Context, collection string, keys primitive.M, options *options.IndexOptions) {
-	col := common.GetSystem().GetCollection(collection)
+	col := base.GetSystem().GetCollection(collection)
 	_, err := col.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    keys,
 		Options: options,

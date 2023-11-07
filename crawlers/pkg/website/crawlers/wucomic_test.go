@@ -3,7 +3,7 @@ package crawlers
 import (
 	"bytes"
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"encoding/base64"
 	"github.com/chromedp/chromedp"
 	"image/jpeg"
@@ -14,7 +14,7 @@ import (
 func TestDownloadPic(t *testing.T) {
 	url := "https://www.wuwucomic.xyz/chapter/22906"
 
-	chromeCtx, cleanFunc := common.OpenChrome(context.Background())
+	chromeCtx, cleanFunc := base.OpenChrome(context.Background())
 	defer cleanFunc()
 
 	var data string

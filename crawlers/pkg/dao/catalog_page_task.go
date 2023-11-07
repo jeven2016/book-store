@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,31 +23,31 @@ type catalogPageTaskInterface interface {
 type catalogPageTaskDaoImpl struct{}
 
 func (c *catalogPageTaskDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*model.CatalogPageTask, error) {
-	return FindById(ctx, id, common.CollectionCatalogPageTask, &model.CatalogPageTask{})
+	return FindById(ctx, id, base.CollectionCatalogPageTask, &model.CatalogPageTask{})
 }
 
 func (c *catalogPageTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.CatalogPageTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnUrl: url}, common.CollectionCatalogPageTask, &model.CatalogPageTask{})
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionCatalogPageTask, &model.CatalogPageTask{})
 	return task, err
 }
 
 func (s *catalogPageTaskDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
-	task, err := FindById(ctx, id, common.CollectionCatalogPageTask, &model.CatalogPageTask{},
-		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
+	task, err := FindById(ctx, id, base.CollectionCatalogPageTask, &model.CatalogPageTask{},
+		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }
 
 func (s *catalogPageTaskDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionCatalogPageTask, &model.CatalogPageTask{},
-		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalogPageTask, &model.CatalogPageTask{},
+		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }
 
 func (c *catalogPageTaskDaoImpl) Save(ctx context.Context, task *model.CatalogPageTask) (*primitive.ObjectID, error) {
-	collection := common.GetSystem().GetCollection(common.CollectionCatalogPageTask)
+	collection := base.GetSystem().GetCollection(base.CollectionCatalogPageTask)
 	if collection == nil {
-		zap.L().Error("collection not found: " + common.CollectionCatalogPageTask)
-		return nil, errors.New("collection not found: " + common.CollectionCatalogPageTask)
+		zap.L().Error("collection not found: " + base.CollectionCatalogPageTask)
+		return nil, errors.New("collection not found: " + base.CollectionCatalogPageTask)
 	}
 	if task.Id.IsZero() {
 		//insert
@@ -69,7 +69,7 @@ func (c *catalogPageTaskDaoImpl) Save(ctx context.Context, task *model.CatalogPa
 		if err = bson.Unmarshal(taskBytes, &doc); err != nil {
 			return nil, err
 		}
-		_, err = collection.UpdateOne(ctx, bson.M{common.ColumId: task.Id, common.ColumnSiteName: task.SiteName}, bson.M{"$set": doc})
+		_, err = collection.UpdateOne(ctx, bson.M{base.ColumId: task.Id, base.ColumnSiteName: task.SiteName}, bson.M{"$set": doc})
 		return &task.Id, err
 	}
 }

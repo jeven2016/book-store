@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,15 +20,15 @@ type novelTaskInterface interface {
 type novelTaskDaoImpl struct{}
 
 func (c *novelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.NovelTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnUrl: url}, common.CollectionNovelTask, &model.NovelTask{})
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionNovelTask, &model.NovelTask{})
 	return task, err
 }
 
 func (c *novelTaskDaoImpl) Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error) {
-	collection := common.GetSystem().GetCollection(common.CollectionNovelTask)
+	collection := base.GetSystem().GetCollection(base.CollectionNovelTask)
 	if collection == nil {
-		zap.L().Error("collection not found: " + common.CollectionNovelTask)
-		return nil, errors.New("collection not found: " + common.CollectionNovelTask)
+		zap.L().Error("collection not found: " + base.CollectionNovelTask)
+		return nil, errors.New("collection not found: " + base.CollectionNovelTask)
 	}
 	if task.Id.IsZero() {
 		//insert
@@ -51,7 +51,7 @@ func (c *novelTaskDaoImpl) Save(ctx context.Context, task *model.NovelTask) (*pr
 			return nil, err
 		}
 		_, err = collection.UpdateOne(ctx,
-			bson.M{common.ColumId: task.Id, common.ColumnSiteName: task.SiteName}, bson.M{"$set": doc})
+			bson.M{base.ColumId: task.Id, base.ColumnSiteName: task.SiteName}, bson.M{"$set": doc})
 		return &task.Id, err
 	}
 }

@@ -2,7 +2,7 @@ package crawlers
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model"
@@ -12,6 +12,10 @@ import (
 	"github.com/go-creed/sat"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
+	"github.com/jeven2016/mylibs/cache"
+	"github.com/jeven2016/mylibs/client"
+	"github.com/jeven2016/mylibs/db"
+	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"os"
@@ -21,25 +25,30 @@ import (
 )
 
 type kxkmCrawler struct {
-	redis       *common.Redis
-	mongoClient *common.MongoClient
+	redis       *cache.Redis
+	mongoClient *db.Mongo
 	colly       *colly.Collector
-	siteCfg     *common.SiteConfig
+	siteCfg     *base.SiteConfig
 	client      *resty.Client
 	zhConvertor sat.Dicter
 }
 
 func NewKxkmCrawler() *kxkmCrawler {
-	sys := common.GetSystem()
-	cfg := common.GetSiteConfig(common.Cartoon18)
+	sys := base.GetSystem()
+	cfg := base.GetSiteConfig(base.Cartoon18)
 	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
+	}
+
+	collyClient, err := client.NewCollector("", 3)
+	if err != nil {
+		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
 	return &kxkmCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(zap.L()),
+		colly:       collyClient,
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),
@@ -57,7 +66,7 @@ func (c kxkmCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *mode
 	cly := c.colly.Clone()
 	cly.OnHTML(".product__item__text > h6 > a", func(element *colly.HTMLElement) {
 		href := element.Attr("href")
-		novelUrl := common.BuildUrl(catalogPageTask.Url, href)
+		novelUrl := utils.BuildUrl(catalogPageTask.Url, href)
 		novelTasks = append(novelTasks, model.NovelTask{
 			Url:      novelUrl,
 			SiteName: catalogPageTask.SiteName,
@@ -96,7 +105,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 		chpTask := model.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
-			Url:      common.BuildUrl(novelTask.Url, a.Attr("href")),
+			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
 		}
 		chpTasks = append(chpTasks, chpTask)
 	})
@@ -151,7 +160,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 		if err == nil && coverImageUrl != "" {
 			destFile := filepath.Join(novelFolder, "cover.jpg")
 			if exist := fileutil.IsExist(destFile); !exist {
-				client, err := common.GetRestyClient(novelTask.Url, true)
+				client, err := client.GetRestyClient(novelTask.Url, true)
 				if err != nil {
 					return chpTasks, err
 				}
@@ -172,7 +181,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 
 func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) error {
 	var err error
-	var client *resty.Client
+	var restyClient *resty.Client
 	var novel *entity.Novel
 
 	cly := c.colly.Clone()
@@ -209,12 +218,12 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 		}
 
 		picUrl := img.Attr("src")
-		client, err = common.GetRestyClient(picUrl, true)
+		restyClient, err = client.GetRestyClient(picUrl, true)
 		if err != nil {
 			return
 		}
 
-		fileFormat, err = common.GetFileExtFromUrl(picUrl)
+		fileFormat, err = utils.GetFileExtFromUrl(picUrl)
 		if err != nil {
 			return
 		}
@@ -226,7 +235,7 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 			return
 		}
 
-		if _, err = client.R().SetOutput(destFile).Get(picUrl); err != nil {
+		if _, err = restyClient.R().SetOutput(destFile).Get(picUrl); err != nil {
 			metrics.MetricsFailedComicPicTaskGauge.Inc()
 			zap.L().Error("[kxkm] failed to download picture", zap.String("url", picUrl), zap.Error(err))
 			return

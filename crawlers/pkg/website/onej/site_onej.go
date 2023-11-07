@@ -2,36 +2,46 @@ package onej
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"encoding/base64"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
+	"github.com/jeven2016/mylibs/cache"
+	"github.com/jeven2016/mylibs/client"
+	"github.com/jeven2016/mylibs/db"
+	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
 	"strings"
 )
 
 type SiteOnej struct {
-	redis       *common.Redis
-	mongoClient *common.MongoClient
+	redis       *cache.Redis
+	mongoClient *db.Mongo
 	logger      *zap.Logger
 	colly       *colly.Collector
-	siteCfg     *common.SiteConfig
+	siteCfg     *base.SiteConfig
 	client      *resty.Client
 }
 
 func NewSiteOnej() *SiteOnej {
-	sys := common.GetSystem()
-	cfg := common.GetSiteConfig(common.SiteOneJ)
+	sys := base.GetSystem()
+	cfg := base.GetSiteConfig(base.SiteOneJ)
 	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
 	}
+
+	collyClient, err := client.NewCollector("", 3)
+	if err != nil {
+		zap.L().Warn("Could not create collector", zap.Error(err))
+	}
+
 	return &SiteOnej{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
 		logger:      zap.L(),
-		colly:       common.NewCollector(zap.L()),
+		colly:       collyClient,
 		siteCfg:     cfg,
 		client:      resty.New(),
 	}
@@ -76,7 +86,7 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.C
 		//download button
 		attachmentUri := element.ChildAttr(".button.is-primary.is-fullwidth", "href")
 		if !strings.HasPrefix(attachmentUri, "http") {
-			attachmentUri = common.BuildUrl(url, attachmentUri)
+			attachmentUri = utils.BuildUrl(url, attachmentUri)
 		}
 		novelMsgs = append(novelMsgs, model.NovelTask{
 			Name:      name,
@@ -108,10 +118,10 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 
 	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
 		//获取catalog name
-		catalogName, err := common.GetAndSet(ctx, novelPageMsg.CatalogId.String(), func() (*string, error) {
-			catlogCol := common.GetSystem().GetCollection(common.CollectionCatalog)
+		catalogName, err := utils.GetAndSet(ctx, novelPageMsg.CatalogId.String(), func() (*string, error) {
+			catlogCol := base.GetSystem().GetCollection(base.CollectionCatalog)
 			var catalogMsg model.CatalogTask
-			if err := catlogCol.FindOne(ctx, bson.M{common.ColumId: novelPageMsg.CatalogId}).Decode(&catalogMsg); err != nil {
+			if err := catlogCol.FindOne(ctx, bson.M{base.ColumId: novelPageMsg.CatalogId}).Decode(&catalogMsg); err != nil {
 				return nil, err
 			} else {
 				return &catalogMsg.Name, nil
@@ -133,7 +143,7 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 		if imgUrl, ok := novelPageMsg.Attributes[imgSrcKey]; ok {
 			imgUrlString := imgUrl.(string)
 			localFile := strings.TrimRight(destDir, "/") + "/" + strings.ToLower(novelPageMsg.Name) + ".jpg"
-			restyClient, err := common.GetRestyClient(imgUrlString, true)
+			restyClient, err := client.GetRestyClient(imgUrlString, true)
 			if err != nil {
 				return nil, err
 			}
@@ -149,7 +159,7 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 		//下载附件
 		if attachmentUrl, ok := novelPageMsg.Attributes[attachmentUriKey]; ok {
 			attachUrlString := attachmentUrl.(string)
-			restyAttClient, err := common.GetRestyClient(attachUrlString, true)
+			restyAttClient, err := client.GetRestyClient(attachUrlString, true)
 			if err != nil {
 				return nil, err
 			}

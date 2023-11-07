@@ -2,7 +2,7 @@ package crawlers
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model"
@@ -12,6 +12,10 @@ import (
 	"github.com/go-creed/sat"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
+	"github.com/jeven2016/mylibs/cache"
+	"github.com/jeven2016/mylibs/client"
+	"github.com/jeven2016/mylibs/db"
+	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"os"
@@ -21,25 +25,30 @@ import (
 )
 
 type wucomicCrawler struct {
-	redis       *common.Redis
-	mongoClient *common.MongoClient
+	redis       *cache.Redis
+	mongoClient *db.Mongo
 	colly       *colly.Collector
-	siteCfg     *common.SiteConfig
+	siteCfg     *base.SiteConfig
 	client      *resty.Client
 	zhConvertor sat.Dicter
 }
 
 func NewWucomicCrawler() *wucomicCrawler {
-	sys := common.GetSystem()
-	cfg := common.GetSiteConfig(common.Cartoon18)
+	sys := base.GetSystem()
+	cfg := base.GetSiteConfig(base.Cartoon18)
 	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
+	}
+
+	collyClient, err := client.NewCollector("", 3)
+	if err != nil {
+		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
 	return &wucomicCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(zap.L()),
+		colly:       collyClient,
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),
@@ -57,7 +66,7 @@ func (c wucomicCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *m
 	cly := c.colly.Clone()
 	cly.OnHTML(".cartoon-cover", func(element *colly.HTMLElement) {
 		href := element.Attr("href")
-		novelUrl := common.BuildUrl(catalogPageTask.Url, href)
+		novelUrl := utils.BuildUrl(catalogPageTask.Url, href)
 		novelTasks = append(novelTasks, model.NovelTask{
 			Url:      novelUrl,
 			SiteName: catalogPageTask.SiteName,
@@ -88,7 +97,7 @@ func (c wucomicCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.Nov
 		chpTask := model.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
-			Url:      common.BuildUrl(novelTask.Url, a.Attr("href")),
+			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
 		}
 		chpTasks = append(chpTasks, chpTask)
 	})
@@ -147,7 +156,7 @@ func (c wucomicCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.Nov
 
 func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) error {
 	var err error
-	var client *resty.Client
+	var restyClient *resty.Client
 	var novel *entity.Novel
 
 	cly := c.colly.Clone()
@@ -182,7 +191,7 @@ func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model
 		}
 
 		picUrl := img.Attr("src")
-		client, err = common.GetRestyClient(picUrl, true)
+		restyClient, err = client.GetRestyClient(picUrl, true)
 		if err != nil {
 			return
 		}
@@ -197,7 +206,7 @@ func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model
 			return
 		}
 
-		if _, err = client.R().SetOutput(destFile).Get(picUrl); err != nil {
+		if _, err = restyClient.R().SetOutput(destFile).Get(picUrl); err != nil {
 			metrics.MetricsFailedComicPicTaskGauge.Inc()
 			zap.L().Error("[wucomic] failed to download picture", zap.String("url", picUrl), zap.Error(err))
 			return

@@ -1,23 +1,25 @@
 package api
 
 import (
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/model/dto"
 	"crawlers/pkg/model/entity"
 	"github.com/gin-gonic/gin"
+	"github.com/jeven2016/mylibs/system"
+	"github.com/jeven2016/mylibs/utils"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
 
 type SiteHandler struct {
-	sys *common.System
+	sys *system.System
 }
 
 func NewSiteHandler() *SiteHandler {
 	return &SiteHandler{
-		sys: common.GetSystem(),
+		sys: base.GetSystem(),
 	}
 }
 
@@ -38,7 +40,7 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 		//自定义error， https://juejin.cn/post/7015517416608235534
 		zap.L().Warn("failed to convert json", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	}
 	currentTime := time.Now()
@@ -48,8 +50,8 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 		Key:           "site",
 		Name:          site.Name,
 		Entity:        site,
-		Collection:    common.CollectionSite,
-		RedisCacheKey: common.GenKey(common.SiteKeyExistsPrefix, site.Name),
+		Collection:    base.CollectionSite,
+		RedisCacheKey: utils.GenKey(base.SiteKeyExistsPrefix, site.Name),
 	})
 }
 
@@ -69,25 +71,25 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 	if err := c.ShouldBindJSON(&catalog); err != nil {
 		zap.L().Warn("failed to convert json", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	}
 
 	//check if the site exists and cache the result
-	exists, err := common.Exists(c, common.GenKey(common.SiteKeyExistsPrefix, catalog.SiteId.Hex()), func() (any, error) {
+	exists, err := utils.Exists(c, utils.GenKey(base.SiteKeyExistsPrefix, catalog.SiteId.Hex()), func() (any, error) {
 		return dao.SiteDao.ExistsById(c, catalog.SiteId)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if any sites exist with this siteId", zap.String("siteId", catalog.SiteId.Hex()),
 			zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	}
 	if !exists {
 		zap.L().Warn("no site exists with this siteId", zap.String("siteId", catalog.SiteId.Hex()))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithParams(common.ErrSiteNotFound, catalog.SiteId.Hex()))
+			base.FailsWithParams(base.ErrSiteNotFound, catalog.SiteId.Hex()))
 		return
 	}
 
@@ -95,35 +97,35 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 		Key:           "catalog",
 		Name:          catalog.Name,
 		Entity:        catalog,
-		Collection:    common.CollectionCatalog,
-		RedisCacheKey: common.GenKey(common.CatalogKeyExistsPrefix, catalog.Name),
+		Collection:    base.CollectionCatalog,
+		RedisCacheKey: utils.GenKey(base.CatalogKeyExistsPrefix, catalog.Name),
 	})
 }
 
 func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
-	col := common.GetSystem().GetCollection(req.Collection)
+	col := base.GetSystem().GetCollection(req.Collection)
 
-	exists, err := common.Exists(c, req.RedisCacheKey, func() (any, error) {
+	exists, err := utils.Exists(c, req.RedisCacheKey, func() (any, error) {
 		return dao.CatalogDao.ExistsByName(c, req.Name)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if it exists", zap.Error(err), zap.Any("request", req.Entity))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	}
 
 	if exists {
 		zap.L().Warn("it's duplicated to save", zap.Any(req.Key, req.Name), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithParams(common.ErrDuplicated, req.Key, req.Name))
+			base.FailsWithParams(base.ErrDuplicated, req.Key, req.Name))
 		return
 	}
 
 	if obj, err := col.InsertOne(c, req.Entity); err != nil {
 		zap.L().Warn("failed to save", zap.Error(err), zap.Any(req.Key, req.Name))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	} else {
 		c.JSON(http.StatusCreated, obj)

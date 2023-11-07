@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"crawlers/pkg/api"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/website"
 	_ "embed"
 	"errors"
 	"fmt"
-	gconfig "github.com/jeven2016/golib/config"
-	"github.com/jeven2016/golib/system"
+	gconfig "github.com/jeven2016/mylibs/config"
+	"github.com/jeven2016/mylibs/system"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"log"
@@ -43,17 +43,18 @@ func run() {
 		Use:     "crawlers",
 		Short:   "crawlers",
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg := &common.ServerConfig{}
-			if err := gconfig.LoadConfig([]byte(configFile), cfg, extraConfigFile, common.ConfigFiles); err != nil {
-				common.PrintCmdErr(err)
+			cfg := &base.ServerConfig{}
+			if err := gconfig.LoadConfig([]byte(configFile), cfg, extraConfigFile, base.ConfigFiles); err != nil {
+				base.PrintCmdErr(err)
 				return
 			}
-			common.SetConfig(cfg)
+			base.SetConfig(cfg)
 
 			//global context
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			sys := systemInit(cfg, cancelFunc, server, ctx)
 			if sys != nil {
+				base.SetSystem(sys)
 				website.RegisterProcessors()
 				dao.InitDao(ctx)
 
@@ -84,7 +85,7 @@ func run() {
 	}
 }
 
-func systemInit(cfg *common.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
+func systemInit(cfg *base.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
 	return system.Startup(&system.StartupParams{
 		EnableEtcd:    false,
 		EnableMongodb: true,

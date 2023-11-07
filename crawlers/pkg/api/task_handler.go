@@ -1,7 +1,7 @@
 package api
 
 import (
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
@@ -9,18 +9,19 @@ import (
 	"crawlers/pkg/website"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/gin-gonic/gin"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type TaskHandler struct {
-	sys *common.System
+	sys *system.System
 }
 
 func NewTaskHandler() *TaskHandler {
 	return &TaskHandler{
-		sys: common.GetSystem(),
+		sys: base.GetSystem(),
 	}
 }
 
@@ -40,7 +41,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 	if err != nil {
 		zap.L().Warn("failed to convert json", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	}
 
@@ -52,14 +53,14 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 
 	//if multiple pages need to handle
 	if sp := website.GetSiteTaskProcessor(site.Name); sp == nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, common.Fails(common.ErrCodeUnSupportedCatalog))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrCodeUnSupportedCatalog))
 		zap.L().Warn("no processor found for this siteKey", zap.String("siteKey", site.Name))
 		return
 	} else {
 		//parse all page urls if page parameter is specified in such format: page=1-5
 		urls, err := sp.ParsePageUrls(site.Name, pageReq.Url)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrParsePageUrl, err.Error()))
+			c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrParsePageUrl, err.Error()))
 			zap.L().Warn("failed to process pageUrl",
 				zap.String("pageUrl", pageReq.Url), zap.Error(err))
 			return
@@ -71,11 +72,11 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 				CatalogId:  pageReq.CatalogId,
 				Url:        url,
 				Attributes: pageReq.Attributes,
-				Status:     common.TaskStatusNotStared,
+				Status:     base.TaskStatusNotStared,
 			}
-			if err = common.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
+			if err = base.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError,
-					common.FailsWithParams(common.ErrPublishMessage, err.Error()))
+					base.FailsWithParams(base.ErrPublishMessage, err.Error()))
 				zap.L().Warn("failed to publish a message",
 					zap.String("pageUrl", pageReq.Url), zap.Error(err))
 				return
@@ -84,7 +85,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 
 	}
 
-	c.JSON(http.StatusAccepted, common.SuccessCode(common.ErrCodeTaskSubmitted))
+	c.JSON(http.StatusAccepted, base.SuccessCode(base.ErrCodeTaskSubmitted))
 }
 
 func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID) (site *entity.Site, hasError bool) {
@@ -94,13 +95,13 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 	siteStringId := catalogId.Hex()
 	if catalog, err = dao.CatalogDao.FindById(c, catalogId); err != nil {
 		zap.L().Warn("catalog does not exist", zap.String("catalogId", catalogStringId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrCatalogNotFound, catalogStringId))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrCatalogNotFound, catalogStringId))
 		hasError = true
 		return
 	}
 	if site, err = dao.SiteDao.FindById(c, catalog.SiteId); err != nil {
 		zap.L().Warn("site does not exist", zap.String("siteId", siteStringId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, common.FailsWithParams(common.ErrSiteNotFound, siteStringId))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteStringId))
 		hasError = true
 		return
 	}
@@ -123,29 +124,29 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 	if err != nil {
 		zap.L().Warn("failed to convert json", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithMessage(common.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	}
 
 	var site *entity.Site
 	var hasError bool
 
-	if slice.Contain(common.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
+	if slice.Contain(base.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			common.FailsWithMessage(common.ErrExcludedNovel, err.Error()))
+			base.FailsWithMessage(base.ErrExcludedNovel, err.Error()))
 		return
 	}
 
 	if site, hasError = h.getTaskEntity(c, novelTask.CatalogId); hasError {
 		return
 	}
-	novelTask.Status = common.TaskStatusNotStared
+	novelTask.Status = base.TaskStatusNotStared
 	novelTask.SiteName = site.Name
 
-	if err := common.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
+	if err := base.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			common.FailsWithParams(common.ErrPublishMessage, err.Error()))
+			base.FailsWithParams(base.ErrPublishMessage, err.Error()))
 		zap.L().Warn("failed to publish a message",
 			zap.String("pageUrl", novelTask.Url), zap.Error(err))
 		return

@@ -2,7 +2,7 @@ package nfs
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
@@ -10,6 +10,10 @@ import (
 	"github.com/go-creed/sat"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
+	"github.com/jeven2016/mylibs/cache"
+	"github.com/jeven2016/mylibs/client"
+	"github.com/jeven2016/mylibs/db"
+	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"strings"
@@ -17,25 +21,30 @@ import (
 )
 
 type NsfCrawler struct {
-	redis       *common.Redis
-	mongoClient *common.MongoClient
+	redis       *cache.Redis
+	mongoClient *db.Mongo
 	colly       *colly.Collector
-	siteCfg     *common.SiteConfig
+	siteCfg     *base.SiteConfig
 	client      *resty.Client
 	zhConvertor sat.Dicter
 }
 
 func NewNsfCrawler() *NsfCrawler {
-	sys := common.GetSystem()
-	cfg := common.GetSiteConfig(common.SiteNsf)
+	sys := base.GetSystem()
+	cfg := base.GetSiteConfig(base.SiteNsf)
 	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", common.SiteNsf))
+		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
+	}
+
+	collyClient, err := client.NewCollector("", 3)
+	if err != nil {
+		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
 	return &NsfCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
-		colly:       common.NewCollector(zap.L()),
+		colly:       collyClient,
 		siteCfg:     cfg,
 		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),
@@ -55,7 +64,7 @@ func (n *NsfCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *mode
 	cly := n.colly.Clone()
 	cly.OnHTML(".CGsectionTwo-right-content-unit .title", func(element *colly.HTMLElement) {
 		href := element.Attr("href")
-		novelUrl := common.BuildUrl(catalogPageTask.Url, href)
+		novelUrl := utils.BuildUrl(catalogPageTask.Url, href)
 		novelTasks = append(novelTasks, model.NovelTask{
 			Url:      novelUrl,
 			SiteName: catalogPageTask.SiteName,
@@ -83,7 +92,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 
 	//获取作者
 	cly.OnHTML(".author .b", func(element *colly.HTMLElement) {
-		novel.Attributes[common.AttrAuthor] = n.zhConvertor.Read(element.Text)
+		novel.Attributes[base.AttrAuthor] = n.zhConvertor.Read(element.Text)
 	})
 
 	//获取描述
@@ -94,7 +103,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 
 	//获取“全部章节”按钮
 	cly.OnHTML(".BGsectionOne-bottom li:nth-of-type(2) a", func(element *colly.HTMLElement) {
-		allChaptersLink := common.BuildUrl(novelTask.Url, element.Attr("href"))
+		allChaptersLink := utils.BuildUrl(novelTask.Url, element.Attr("href"))
 		if allChaptersLink == "" {
 			zap.L().Warn("No chapters found", zap.String("novelUrl", novelTask.Url))
 			return
@@ -113,14 +122,14 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 		chpTask := model.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
-			Url:      common.BuildUrl(novelTask.Url, a.Attr("href")),
+			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
 		}
 		chpTasks = append(chpTasks, chpTask)
 	})
 
 	//解析完当前页面，解析下一页
 	cly.OnHTML(".CGsectionTwo-right-bottom-btn #next", func(nextBtn *colly.HTMLElement) {
-		nextPageUrl := common.BuildUrl(novelTask.Url, nextBtn.Attr("href"))
+		nextPageUrl := utils.BuildUrl(novelTask.Url, nextBtn.Attr("href"))
 		if err := cly.Visit(nextPageUrl); err != nil {
 			zap.L().Error("error occurred while visiting the next page", zap.String("nextPageUrl", nextPageUrl),
 				zap.String("novelName", novelTask.Name))
@@ -175,7 +184,7 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 	zap.L().Info("Got chapter message", zap.String("url", chapterTask.Url))
 	var createdTime = time.Now()
 
-	chromeCtx, cleanFunc := common.OpenChrome(context.Background())
+	chromeCtx, cleanFunc := client.OpenChrome(context.Background())
 	defer cleanFunc()
 
 	var text string //content of the chapter
@@ -233,7 +242,7 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 		//create one
 		existingContent = &entity.Content{
 			ParentId:    *chapterId,
-			ParentType:  common.ParentTypeChapter,
+			ParentType:  base.ParentTypeChapter,
 			Content:     text,
 			CreatedTime: &createdTime,
 		}

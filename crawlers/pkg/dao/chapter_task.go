@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,15 +20,15 @@ type chapterTaskInterface interface {
 type chapterTaskDaoImpl struct{}
 
 func (c *chapterTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.ChapterTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnUrl: url}, common.CollectionChapterTask, &model.ChapterTask{})
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionChapterTask, &model.ChapterTask{})
 	return task, err
 }
 
 func (c *chapterTaskDaoImpl) Save(ctx context.Context, task *model.ChapterTask) (*primitive.ObjectID, error) {
-	collection := common.GetSystem().GetCollection(common.CollectionChapterTask)
+	collection := base.GetSystem().GetCollection(base.CollectionChapterTask)
 	if collection == nil {
-		zap.L().Error("collection not found: " + common.CollectionChapterTask)
-		return nil, errors.New("collection not found: " + common.CollectionChapterTask)
+		zap.L().Error("collection not found: " + base.CollectionChapterTask)
+		return nil, errors.New("collection not found: " + base.CollectionChapterTask)
 	}
 	if task.Id.IsZero() {
 		//insert
@@ -51,7 +51,7 @@ func (c *chapterTaskDaoImpl) Save(ctx context.Context, task *model.ChapterTask) 
 			return nil, err
 		}
 		_, err = collection.UpdateOne(ctx,
-			bson.M{common.ColumId: task.Id, common.ColumnSiteName: task.SiteName}, bson.M{"$set": doc})
+			bson.M{base.ColumId: task.Id, base.ColumnSiteName: task.SiteName}, bson.M{"$set": doc})
 		return &task.Id, err
 	}
 }

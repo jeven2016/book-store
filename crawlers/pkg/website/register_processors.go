@@ -2,7 +2,7 @@ package website
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"crawlers/pkg/website/cartoon18"
 	"crawlers/pkg/website/crawlers"
@@ -23,10 +23,10 @@ var siteCrawlerMap = make(map[string]SiteCrawler)
 var siteTaskProcessorMap = make(map[string]TaskProcessor)
 
 func RegisterProcessors() {
-	siteCrawlerMap[common.SiteOneJ] = onej.NewSiteOnej()
-	siteCrawlerMap[common.SiteNsf] = nfs.NewNsfCrawler()
-	siteCrawlerMap[common.Cartoon18] = cartoon18.NewCartoonCrawler()
-	siteCrawlerMap[common.Kxkm] = crawlers.NewKxkmCrawler()
+	siteCrawlerMap[base.SiteOneJ] = onej.NewSiteOnej()
+	siteCrawlerMap[base.SiteNsf] = nfs.NewNsfCrawler()
+	siteCrawlerMap[base.Cartoon18] = cartoon18.NewCartoonCrawler()
+	siteCrawlerMap[base.Kxkm] = crawlers.NewKxkmCrawler()
 
 	//defaultTaskProcessor := NewTaskProcessor()
 	//siteTaskProcessorMap[common.SiteOneJ] = defaultTaskProcessor

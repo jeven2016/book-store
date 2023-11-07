@@ -1,7 +1,7 @@
 package stream
 
 import (
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"go.uber.org/zap"
 	"strings"
 )
@@ -32,7 +32,7 @@ func GenStreamTaskParams(siteName string) *StreamTaskParams {
 		return defaultParams
 	}
 
-	cfg := common.GetSiteConfig(siteName)
+	cfg := base.GetSiteConfig(siteName)
 	if cfg == nil {
 		zap.L().Warn("The default stream task parameters returned while no customized definition found",
 			zap.String("siteName", siteName))

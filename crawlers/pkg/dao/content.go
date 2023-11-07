@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,10 +21,10 @@ type contentInterface interface {
 type contentDaoImpl struct{}
 
 func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
-	collection := common.GetSystem().GetCollection(common.CollectionContent)
+	collection := base.GetSystem().GetCollection(base.CollectionContent)
 	//for creating
 	if !content.Id.IsZero() {
-		return nil, common.ErrDocumentIdExists
+		return nil, base.ErrDocumentIdExists
 	}
 	//check if name conflicts
 	existingContent, err := c.FindByParentIdAndPage(ctx, &content.ParentId, content.Page)
@@ -32,7 +32,7 @@ func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 		return nil, err
 	}
 	if existingContent != nil {
-		return nil, common.ErrDuplicatedDocument
+		return nil, base.ErrDuplicatedDocument
 	}
 	//insert
 	if result, err := collection.InsertOne(ctx, content, &options.InsertOneOptions{}); err != nil {
@@ -44,8 +44,8 @@ func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 }
 
 func (c *contentDaoImpl) FindByParentIdAndPage(ctx context.Context, parentId *primitive.ObjectID, pageNo int) (*entity.Content, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnParentId: parentId}, //TODO: common.ColumnPageNo: pageNo
-		common.CollectionContent, &entity.Content{},
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnParentId: parentId}, //TODO: common.ColumnPageNo: pageNo
+		base.CollectionContent, &entity.Content{},
 		&options.FindOneOptions{})
 	return task, err
 }
@@ -55,10 +55,10 @@ func (c *contentDaoImpl) Save(ctx context.Context, content *entity.Content) (*pr
 		//insert
 		return c.Insert(ctx, content)
 	} else {
-		collection := common.GetSystem().GetCollection(common.CollectionContent)
+		collection := base.GetSystem().GetCollection(base.CollectionContent)
 		if collection == nil {
-			zap.L().Error("collection not found: " + common.CollectionContent)
-			return nil, errors.New("collection not found: " + common.CollectionContent)
+			zap.L().Error("collection not found: " + base.CollectionContent)
+			return nil, errors.New("collection not found: " + base.CollectionContent)
 		}
 		//update
 		curTime := time.Now()
@@ -72,7 +72,7 @@ func (c *contentDaoImpl) Save(ctx context.Context, content *entity.Content) (*pr
 		if err = bson.Unmarshal(taskBytes, &doc); err != nil {
 			return nil, err
 		}
-		_, err = collection.UpdateOne(ctx, bson.M{common.ColumId: content.Id}, bson.M{"$set": doc})
+		_, err = collection.UpdateOne(ctx, bson.M{base.ColumId: content.Id}, bson.M{"$set": doc})
 		return &content.Id, err
 	}
 }

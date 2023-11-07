@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +23,7 @@ type novelInterface interface {
 type novelDaoImpl struct{}
 
 func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error) {
-	novel, err := FindByMongoFilter(ctx, bson.M{common.ColumId: id}, common.CollectionNovel, &entity.Novel{},
+	novel, err := FindByMongoFilter(ctx, bson.M{base.ColumId: id}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{})
 	if err != nil || novel == nil {
 		return nil, err
@@ -32,8 +32,8 @@ func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*en
 }
 
 func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error) {
-	novel, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionNovel, &entity.Novel{},
-		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
+	novel, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
+		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	if err != nil || novel == nil {
 		return nil, err
 	}
@@ -41,16 +41,16 @@ func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitiv
 }
 
 func (n *novelDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	novel, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionNovel, &entity.Novel{},
-		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
+	novel, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
+		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return novel != nil, err
 }
 
 func (n *novelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
-	collection := common.GetSystem().GetCollection(common.CollectionNovel)
+	collection := base.GetSystem().GetCollection(base.CollectionNovel)
 	//for creating
 	if !novel.Id.IsZero() {
-		return nil, common.ErrDocumentIdExists
+		return nil, base.ErrDocumentIdExists
 	}
 	//check if name conflicts
 	exists, err := n.ExistsByName(ctx, novel.Name)
@@ -58,7 +58,7 @@ func (n *novelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primit
 		return nil, err
 	}
 	if exists {
-		return nil, common.ErrDuplicatedDocument
+		return nil, base.ErrDuplicatedDocument
 	}
 	//insert
 	if result, err := collection.InsertOne(ctx, novel, &options.InsertOneOptions{}); err != nil {
@@ -74,10 +74,10 @@ func (c *novelDaoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitiv
 		//insert
 		return c.Insert(ctx, novel)
 	} else {
-		collection := common.GetSystem().GetCollection(common.CollectionNovel)
+		collection := base.GetSystem().GetCollection(base.CollectionNovel)
 		if collection == nil {
-			zap.L().Error("collection not found: " + common.CollectionNovel)
-			return nil, errors.New("collection not found: " + common.CollectionNovel)
+			zap.L().Error("collection not found: " + base.CollectionNovel)
+			return nil, errors.New("collection not found: " + base.CollectionNovel)
 		}
 		//update
 		curTime := time.Now()
@@ -91,7 +91,7 @@ func (c *novelDaoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitiv
 		if err = bson.Unmarshal(taskBytes, &doc); err != nil {
 			return nil, err
 		}
-		_, err = collection.UpdateOne(ctx, bson.M{common.ColumId: novel.Id}, bson.M{"$set": doc})
+		_, err = collection.UpdateOne(ctx, bson.M{base.ColumId: novel.Id}, bson.M{"$set": doc})
 		return &novel.Id, err
 	}
 }

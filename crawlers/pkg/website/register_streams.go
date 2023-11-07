@@ -2,7 +2,7 @@ package website
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"crawlers/pkg/stream"
 	"github.com/reugn/go-streams/extension"
@@ -59,19 +59,19 @@ func LaunchSiteTasks(ctx context.Context, siteName string) (err error) {
 // 解析page url得到每一个novel的url
 // from: catalogPage stream => novel stream
 func catalogPageStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTaskParams) error {
-	source, err := stream.NewRedisStreamSource(context.Background(), common.GetSystem().RedisClient,
+	source, err := stream.NewRedisStreamSource(context.Background(), base.GetSystem().RedisClient,
 		params.CatalogPageStreamName, params.CatalogPageStreamConsumer)
 	if err != nil {
 		return err
 	}
 
-	err = common.GetSystem().TaskPool.Submit(func() {
+	err = base.GetSystem().TaskPool.Submit(func() {
 		source.
 			Via(flow.NewMap(pr.HandleCatalogPageTask, 1)).
 			Via(flow.NewFlatMap(func(novelMsg []model.NovelTask) []model.NovelTask {
 				return novelMsg
-			}, uint(common.GetConfig().CrawlerSettings.CatalogPageTaskParallelism))).
-			To(stream.NewRedisStreamSink(ctx, common.GetSystem().RedisClient,
+			}, uint(base.GetConfig().CrawlerSettings.CatalogPageTaskParallelism))).
+			To(stream.NewRedisStreamSink(ctx, base.GetSystem().RedisClient,
 				params.NovelPageStreamName))
 	})
 	if err != nil {
@@ -83,19 +83,19 @@ func catalogPageStream(ctx context.Context, pr TaskProcessor, params *stream.Str
 
 // 处理每一个novel
 func novelStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTaskParams) error {
-	source, err := stream.NewRedisStreamSource(context.Background(), common.GetSystem().RedisClient,
+	source, err := stream.NewRedisStreamSource(context.Background(), base.GetSystem().RedisClient,
 		params.NovelPageStreamName, params.NovelPageStreamConsumer)
 	if err != nil {
 		return err
 	}
 
 	//item url
-	sink := stream.NewRedisStreamSink(ctx, common.GetSystem().RedisClient,
+	sink := stream.NewRedisStreamSink(ctx, base.GetSystem().RedisClient,
 		params.ChapterPageStreamName)
 
-	err = common.GetSystem().TaskPool.Submit(func() {
+	err = base.GetSystem().TaskPool.Submit(func() {
 		source.
-			Via(flow.NewMap(pr.HandleNovelTask, uint(common.GetConfig().CrawlerSettings.NovelTaskParallelism))).
+			Via(flow.NewMap(pr.HandleNovelTask, uint(base.GetConfig().CrawlerSettings.NovelTaskParallelism))).
 			Via(flow.NewFlatMap(func(novelMsg []model.ChapterTask) []model.ChapterTask {
 				return novelMsg
 			}, 1)).
@@ -110,15 +110,15 @@ func novelStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTas
 
 // 处理每一个novel
 func chapterStream(ctx context.Context, pr TaskProcessor, params *stream.StreamTaskParams) error {
-	source, err := stream.NewRedisStreamSource(ctx, common.GetSystem().RedisClient,
+	source, err := stream.NewRedisStreamSource(ctx, base.GetSystem().RedisClient,
 		params.ChapterPageStreamName, params.ChapterPageStreamConsumer)
 	if err != nil {
 		return err
 	}
 
-	err = common.GetSystem().TaskPool.Submit(func() {
+	err = base.GetSystem().TaskPool.Submit(func() {
 		source.
-			Via(flow.NewMap(pr.HandleChapterTask, uint(common.GetConfig().CrawlerSettings.ChapterTaskParallelism))).
+			Via(flow.NewMap(pr.HandleChapterTask, uint(base.GetConfig().CrawlerSettings.ChapterTaskParallelism))).
 			To(extension.NewIgnoreSink())
 	})
 	if err != nil {

@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +23,7 @@ type chapterInterface interface {
 type chapterDaoImpl struct{}
 
 func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.Chapter, error) {
-	chapter, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &entity.Chapter{},
+	chapter, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{})
 	if err != nil || chapter == nil {
 		return nil, err
@@ -32,16 +32,16 @@ func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.C
 }
 
 func (n *chapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{common.ColumnName: name}, common.CollectionChapter, &entity.Chapter{},
-		&options.FindOneOptions{Projection: bson.M{common.ColumId: 1}})
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
+		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }
 
 func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error) {
-	collection := common.GetSystem().GetCollection(common.CollectionChapter)
+	collection := base.GetSystem().GetCollection(base.CollectionChapter)
 	//for creating
 	if !novel.Id.IsZero() {
-		return nil, common.ErrDocumentIdExists
+		return nil, base.ErrDocumentIdExists
 	}
 	//check if name conflicts
 	exists, err := n.ExistsByName(ctx, novel.Name)
@@ -49,7 +49,7 @@ func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*pr
 		return nil, err
 	}
 	if exists {
-		return nil, common.ErrDuplicatedDocument
+		return nil, base.ErrDuplicatedDocument
 	}
 	//insert
 	if result, err := collection.InsertOne(ctx, novel, &options.InsertOneOptions{}); err != nil {
@@ -65,10 +65,10 @@ func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*pr
 		//insert
 		return n.Insert(ctx, chapter)
 	} else {
-		collection := common.GetSystem().GetCollection(common.CollectionChapter)
+		collection := base.GetSystem().GetCollection(base.CollectionChapter)
 		if collection == nil {
-			zap.L().Error("collection not found: " + common.CollectionChapter)
-			return nil, errors.New("collection not found: " + common.CollectionChapter)
+			zap.L().Error("collection not found: " + base.CollectionChapter)
+			return nil, errors.New("collection not found: " + base.CollectionChapter)
 		}
 		//update
 		curTime := time.Now()
@@ -82,13 +82,13 @@ func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*pr
 		if err = bson.Unmarshal(taskBytes, &doc); err != nil {
 			return nil, err
 		}
-		_, err = collection.UpdateOne(ctx, bson.M{common.ColumId: chapter.Id}, bson.M{"$set": doc})
+		_, err = collection.UpdateOne(ctx, bson.M{base.ColumId: chapter.Id}, bson.M{"$set": doc})
 		return &chapter.Id, err
 	}
 }
 
 func (n *chapterDaoImpl) BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error {
-	collection := common.GetSystem().GetCollection(common.CollectionChapter)
+	collection := base.GetSystem().GetCollection(base.CollectionChapter)
 
 	documents := make([]interface{}, len(chapters))
 

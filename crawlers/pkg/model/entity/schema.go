@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"crawlers/pkg/common"
+	"crawlers/pkg/base"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
@@ -12,7 +12,7 @@ type Site struct {
 	DisplayName string                 `bson:"displayName" json:"displayName" binding:"required"`
 	Description string                 `bson:"description" json:"description"`
 	Attributes  map[string]interface{} `bson:"attributes" json:"attributes"`
-	CrawlerType common.CrawlerType     `bson:"crawlerType" json:"crawlerType" binding:"required"` //资源抓取类型
+	CrawlerType base.CrawlerType       `bson:"crawlerType" json:"crawlerType" binding:"required"` //资源抓取类型
 
 	CreatedTime *time.Time `bson:"created" bson:"createdTime"`
 	UpdatedTime *time.Time `bson:"updated" bson:"updatedTime"`
@@ -24,7 +24,7 @@ type Catalog struct {
 	Name        string                 `bson:"name" json:"name" binding:"required"`
 	Description string                 `bson:"description" json:"description"`
 	Attributes  map[string]interface{} `bson:"attributes" json:"attributes"`
-	CrawlerType common.CrawlerType     `bson:"crawlerType" json:"crawlerType"` //资源抓取类型
+	CrawlerType base.CrawlerType       `bson:"crawlerType" json:"crawlerType"` //资源抓取类型
 
 	CreatedTime *time.Time `bson:"created" bson:"createdTime"`
 	UpdatedTime *time.Time `bson:"updated" bson:"updatedTime"`

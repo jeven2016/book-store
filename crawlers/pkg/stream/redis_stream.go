@@ -2,7 +2,7 @@ package stream
 
 import (
 	"context"
-	"crawlers/pkg/common"
+	"github.com/jeven2016/mylibs/cache"
 	"github.com/reugn/go-streams"
 	"github.com/reugn/go-streams/flow"
 	"go.uber.org/zap"
@@ -19,14 +19,14 @@ import (
 // RedisStreamSource is a Redis Pub/Sub Source
 type RedisStreamSource struct {
 	ctx           context.Context
-	redisClient   *common.Redis
+	redisClient   *cache.Redis
 	out           chan interface{}
 	streamName    string
 	consumerGroup string
 }
 
 // NewRedisStreamSource returns a new RedisStreamSource instance
-func NewRedisStreamSource(ctx context.Context, client *common.Redis, streamName string,
+func NewRedisStreamSource(ctx context.Context, client *cache.Redis, streamName string,
 	consumerGroup string) (*RedisStreamSource, error) {
 	var err error
 	if err = client.EnsureConsumeGroupCreated(ctx, streamName, consumerGroup); err != nil {
@@ -63,13 +63,13 @@ func (rs *RedisStreamSource) Out() <-chan interface{} {
 
 // RedisStreamSink is a Redis Pub/Sub Sink
 type RedisStreamSink struct {
-	redisClient *common.Redis
+	redisClient *cache.Redis
 	in          chan interface{}
 	streamName  string
 }
 
 // NewRedisStreamSink returns a new RedisStreamSink instance
-func NewRedisStreamSink(ctx context.Context, client *common.Redis, streamName string) *RedisStreamSink {
+func NewRedisStreamSink(ctx context.Context, client *cache.Redis, streamName string) *RedisStreamSink {
 	sink := &RedisStreamSink{
 		client,
 		make(chan interface{}),
