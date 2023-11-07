@@ -130,7 +130,7 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 	var site *entity.Site
 	var hasError bool
 
-	if slice.Contain(common.GetConfig().CrawlerSettings.EcludedNovelUrls, novelTask.Url) {
+	if slice.Contain(common.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
 			common.FailsWithMessage(common.ErrExcludedNovel, err.Error()))

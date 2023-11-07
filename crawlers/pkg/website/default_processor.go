@@ -178,7 +178,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 		return
 	}
 
-	if slice.Contain(common.GetConfig().CrawlerSettings.EcludedNovelUrls, novelTask.Url) {
+	if slice.Contain(common.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
 		return
 	}

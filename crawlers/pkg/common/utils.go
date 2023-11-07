@@ -57,8 +57,7 @@ func BuildUrl(baseUri string, path string) string {
 }
 
 func GetSiteConfig(siteKey string) *SiteConfig {
-	sys := GetSystem()
-	cfg, ok := slice.FindBy(sys.Config.GetServerConfig().WebSites, func(index int, item SiteConfig) bool {
+	cfg, ok := slice.FindBy(GetConfig().WebSites, func(index int, item SiteConfig) bool {
 		return item.Name == siteKey
 	})
 	if !ok {

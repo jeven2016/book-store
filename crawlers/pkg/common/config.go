@@ -1,47 +1,11 @@
 package common
 
+import "github.com/jeven2016/golib/config"
+
 type Config interface {
 	GetServerConfig() *ServerConfig
 	Validate() error
 	Complete() error
-}
-
-type Registration struct {
-	Scenario string     `koanf:"scenario,omitempty"`
-	Etcd     EtcdConfig `koanf:"etcd,omitempty"`
-}
-
-type MongoConfig struct {
-	Uri      string `koanf:"uri"`
-	Database string `koanf:"database"`
-}
-
-type LogConfig struct {
-	Enabled       bool   `koanf:"enabled"`
-	LogLevel      string `koanf:"logLevel"`
-	LogPath       string `koanf:"logPath"`
-	OutputConsole bool   `koanf:"outputToConsole"`
-	FileName      string `koanf:"fileName"`
-	MaxSizeInMB   int    `koanf:"maxSizeInMB"`
-	MaxAgeInDays  int    `koanf:"maxAgeInDays"`
-	MaxBackups    int    `koanf:"maxBackups"`
-	Compress      bool   `koanf:"compress"`
-}
-
-type EtcdConfig struct {
-	RefreshSeconds        uint     `koanf:"refreshSeconds"`
-	ConnectTimeoutSeconds uint     `koanf:"connectTimeoutSeconds"`
-	Endpoints             []string `koanf:"endpoints"`
-}
-
-type HttpSetting struct {
-	Port    uint   `koanf:"port"`
-	Address string `koanf:"address"`
-	Proxy   string `koanf:"proxy"`
-}
-
-type TaskPoolSetting struct {
-	Capacity int `koanf:"capacity"`
 }
 
 type RegexSettings struct {
@@ -73,38 +37,21 @@ type SiteConfig struct {
 	UseSeparateSpace bool `koanf:"useSeparateSpace"`
 }
 
-type RedisConfig struct {
-	Address                  string `koanf:"address,omitempty"`
-	Password                 string `koanf:"password,omitempty"`
-	DefaultDb                int    `koanf:"defaultDb,omitempty"`
-	PoolSize                 int    `koanf:"poolSize,omitempty"`
-	PoolTimeout              int    `koanf:"poolTimeout"`
-	ReadTimeout              int    `koanf:"readTimeout"`
-	WriteTimeout             int    `koanf:"writeTimeout"`
-	AutoCreateConsumerGroups bool   `koanf:"autoCreateConsumerGroups"`
-}
-
 type CrawlerSettings struct {
 	CatalogPageTaskParallelism int      `koanf:"catalogPageTaskParallelism"`
 	NovelTaskParallelism       int      `koanf:"novelTaskParallelism"`
 	ChapterTaskParallelism     int      `koanf:"chapterTaskParallelism"`
-	EcludedNovelUrls           []string `koanf:"excludedNovelUrls"`
+	ExcludedNovelUrls          []string `koanf:"excludedNovelUrls"`
 }
 
 type ServerConfig struct {
-	ApplicationName string           `koanf:"applicationName"`
-	Http            *HttpSetting     `koanf:"http"`
-	Registration    *Registration    `koanf:"registration"`
-	Redis           *RedisConfig     `koanf:"redis"`
-	Mongo           *MongoConfig     `koanf:"mongodb"`
-	LogSetting      *LogConfig       `koanf:"logConfig"`
+	config.ServerConfig
 	CrawlerSettings *CrawlerSettings `koanf:"crawlerSettings"`
-	TaskPoolSetting *TaskPoolSetting `koanf:"taskPool"`
 	WebSites        []SiteConfig     `koanf:"webSites"`
 }
 
-func (s ServerConfig) GetServerConfig() *ServerConfig {
-	return &s
+func (s ServerConfig) GetServerConfig() *config.ServerConfig {
+	return &s.ServerConfig
 }
 func (s ServerConfig) Validate() error {
 	return nil

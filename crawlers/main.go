@@ -9,6 +9,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	gconfig "github.com/jeven2016/golib/config"
+	"github.com/jeven2016/golib/system"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"log"
@@ -42,7 +44,7 @@ func run() {
 		Short:   "crawlers",
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg := &common.ServerConfig{}
-			if err := common.LoadConfig([]byte(configFile), cfg, extraConfigFile); err != nil {
+			if err := gconfig.LoadConfig([]byte(configFile), cfg, extraConfigFile, common.ConfigFiles); err != nil {
 				common.PrintCmdErr(err)
 				return
 			}
@@ -82,12 +84,12 @@ func run() {
 	}
 }
 
-func systemInit(cfg *common.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *common.System {
-	sys := common.Startup(&common.StartupParams{
+func systemInit(cfg *common.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
+	return system.Startup(&system.StartupParams{
 		EnableEtcd:    false,
 		EnableMongodb: true,
 		EnableRedis:   true,
-		Config:        cfg,
+		Config:        cfg.GetServerConfig(),
 		PreShutdown: func() error {
 			cancelFunc()
 			return nil
@@ -103,8 +105,4 @@ func systemInit(cfg *common.ServerConfig, cancelFunc context.CancelFunc, server 
 			return nil
 		},
 	})
-	if sys != nil {
-		common.SetSystem(sys)
-	}
-	return sys
 }

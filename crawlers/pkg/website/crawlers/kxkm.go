@@ -196,8 +196,9 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 	}
 
 	var fileFormat string
-	var i = 1
+	var i = 0
 	cly.OnHTML(".blog__details__content>img", func(img *colly.HTMLElement) {
+		i++
 		if err != nil {
 			metrics.MetricsFailedComicPicTaskGauge.Inc()
 			return
@@ -218,7 +219,6 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.Ch
 			return
 		}
 		destFile := filepath.Join(chapterDir, fmt.Sprintf("%04d", i)+fileFormat)
-		i++
 
 		if fileutil.IsExist(destFile) {
 			metrics.MetricsComicPicDownloaded.Inc()
