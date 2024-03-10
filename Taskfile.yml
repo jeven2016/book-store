@@ -5,7 +5,7 @@ env:
   DOCKER_REPO: docker-local
 
   REPO_USER: admin
-  REPO_PASSWORD: Wzjzzl2015
+  REPO_PASSWORD: $REPO_PWD 
 
   RELEASE_VERSION: 0.1
 
