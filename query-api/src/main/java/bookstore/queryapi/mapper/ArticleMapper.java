@@ -4,9 +4,10 @@ import bookstore.queryapi.document.ArticleDoc;
 import bookstore.queryapi.dto.ArticleDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-@Mapper
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ArticleMapper {
 
     ArticleMapper INSTANCE = Mappers.getMapper(ArticleMapper.class);

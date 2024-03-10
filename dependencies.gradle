@@ -2,8 +2,8 @@
 ext.projectInfo = [
         'group'              : 'wzjtech',
         'version'            : '0.1',
-        'sourceCompatibility': '21',
-        'targetCompatibility': '21'
+        'sourceCompatibility': JavaVersion.VERSION_21,
+        'targetCompatibility': JavaVersion.VERSION_21
 ]
 
 //The libraries used for project
@@ -91,9 +91,9 @@ ext.libs = [
         'spring-security-test'                        : 'org.springframework.security:spring-security-test',
         'spring-cloud-stream-test-support'            : 'org.springframework.cloud:spring-cloud-stream-test-support',
 
-        'mapstruct'                                   : 'org.mapstruct:mapstruct:1.5.3.Final',
-        'mapstruct-processor'                         : 'org.mapstruct:mapstruct-processor:1.5.3.Final',
-        lombok                                        : 'org.projectlombok:lombok:1.18.20',
+        'mapstruct'                                   : 'org.mapstruct:mapstruct:1.5.5.Final',
+        'mapstruct-processor'                         : 'org.mapstruct:mapstruct-processor:1.5.5.Final',
+        lombok                                        : 'org.projectlombok:lombok:1.18.30',
         'lombok-mapstruct-binding'                    : 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 ]
 //ext['mockito.version'] = '3.7.7'

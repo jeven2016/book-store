@@ -1,4 +1,5 @@
-FROM 192.168.1.21:8082/docker-group/openjdk:20-ea-17-jdk-oracle
+FROM docker-public.home.com/library/openjdk:21-jdk-slim
+#FROM docker-public.home.com/library/openjdk:21-jdk-oracle
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8

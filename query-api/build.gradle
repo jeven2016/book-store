@@ -7,6 +7,8 @@ plugins {
 group 'bookstore.queryapi'
 version '1.0'
 
+
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
