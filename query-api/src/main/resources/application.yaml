@@ -1,13 +1,13 @@
 env:
-  mongodb_user: ${MONGODB_USER:db_user}
-  mongodb_pwd: ${MONGODB_PWD:db_pwd}
+  mongodb_user: ${MONGODB_USER:root}
+  mongodb_pwd: ${MONGODB_PWD:root}
   mongodb_host: ${MONGODB_HOST:192.168.1.66}
   mongodb_port: ${MONGODB_PORT:32017}
   mongodb_uri: "mongodb://${env.mongodb_user}:${env.mongodb_pwd}@${env.mongodb_host}:${env.mongodb_port}/books?connectTimeoutMS=20000&minPoolSize=0&maxPoolSize=10&maxIdleTimeMS=900000&authSource=admin"
   redis_host: "${REDIS_HOST:192.168.1.66}"
   redis_port: "${REDIS_PORT:32379}"
   redis_password: "${REDIS_PASSWORD:db_pwd}"
-  es_uris: "${ES_URIS:http://192.168.1.66:30920}"
+  es_uris: "${ES_URIS:http://elastic.home.com}"
 
 server:
   port: 8080
